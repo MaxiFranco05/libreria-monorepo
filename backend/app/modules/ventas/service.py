@@ -61,11 +61,24 @@ async def crear_venta(
             detail="El libro referenciado no existe"
         )
 
-    # 4. Construir renglones con precio_unitario copiado del libro
+    # 4. Validar stock y construir renglones con precio_unitario copiado del libro
+    from fastapi import HTTPException, status
     renglones_models = []
     total = Decimal("0")
     for renglon_data in data.renglones:
         libro = libros_dict[renglon_data.libro_id]
+
+        # Validar stock suficiente
+        if libro.stock < renglon_data.cantidad:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=f"Stock insuficiente para '{libro.titulo}'. Stock disponible: {libro.stock}, cantidad solicitada: {renglon_data.cantidad}."
+            )
+
+        # Descontar stock
+        libro.stock -= renglon_data.cantidad
+        session.add(libro)
+
         precio_unitario = libro.precio
         subtotal = Decimal(str(renglon_data.cantidad)) * precio_unitario
         total += subtotal

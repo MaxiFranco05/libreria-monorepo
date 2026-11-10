@@ -179,7 +179,7 @@
           </span>
           <span class="meta-pill stock-pill-modal">
             <span class="stock-dot"></span>
-            ${book.stock !== undefined ? book.stock : 0} ejemplares en depósito
+            ${book.stock !== undefined ? book.stock : 0} ejemplares
           </span>
         `;
       }
@@ -480,6 +480,7 @@
   const catalogoView = {
     init,
     loadCatalog,
+    showBookDetail,
     onActivate() {
       loadCatalog({ resetOffset: false });
     }

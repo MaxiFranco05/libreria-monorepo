@@ -49,10 +49,8 @@
     ✕ Salir del Simulador Móvil (390x844)
   </div>
 
-  <!-- Contenedor del Simulador (en modo normal es transparente, en modo simulador se vuelve carcasa de teléfono) -->
-  <div class="simulator-phone-shell" id="simulator-shell">
-    
-    <div class="phone-notch" aria-hidden="true"></div>
+  <!-- Contenedor Estructural de la Aplicación -->
+  <div class="app-layout" id="app-layout">
 
     <!-- Encabezado Isleño Flotante (Redondeado) -->
     <div class="header-wrapper">
@@ -315,11 +313,14 @@
                   <table class="table" id="tabla-libros">
                     <thead>
                       <tr>
-                        <th scope="col">ID</th>
+                        <th scope="col" style="width: 48px;">ID</th>
                         <th scope="col">Título</th>
                         <th scope="col">ISBN</th>
-                        <th scope="col">Precio</th>
+                        <th scope="col">Editorial</th>
+                        <th scope="col">Género</th>
                         <th scope="col">Stock</th>
+                        <th scope="col">Precio</th>
+                        <th scope="col" style="text-align: right;">Acciones</th>
                       </tr>
                     </thead>
                     <tbody id="libros-table-body"></tbody>
@@ -602,6 +603,6 @@
       </div>
     </footer>
 
-  </div> <!-- Fin simulator-phone-shell -->
+  </div> <!-- Fin app-layout -->
 </body>
 </html>

@@ -2,12 +2,21 @@
    Layout CSS - Estructura, Grid/Flexbox, Header Isleño, Dock Móvil y Simulador
    ========================================================================== */
 
+/* Contenedor Estructural de la SPA (Sticky Footer garantizado) */
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  width: 100%;
+  flex: 1 0 auto;
+}
+
 /* Contenedores centrados con padding responsivo */
 .header-wrapper {
   position: sticky;
-  top: 0.75rem;
+  top: 0;
   z-index: 100;
-  padding: 0 1rem;
+  padding: 0.75rem 1rem 0.5rem;
   width: 100%;
   max-width: 1180px;
   margin: 0 auto;
@@ -209,7 +218,7 @@
    Contenido Principal y Vistas SPA
    -------------------------------------------------------------------------- */
 .main-content {
-  flex: 1;
+  flex: 1 0 auto;
   padding: 1.5rem 0 5.5rem; /* Margen inferior para no tapar dock móvil */
 }
 
@@ -256,7 +265,7 @@
 }
 
 /* --------------------------------------------------------------------------
-   Pie de Página Institucional
+   Pie de Página Institucional (Sticky al fondo)
    -------------------------------------------------------------------------- */
 .app-footer {
   background-color: var(--bg-surface);
@@ -285,82 +294,94 @@
 
 /* --------------------------------------------------------------------------
    Simulador de Dispositivo Móvil (Academic Defense Showcase)
-   Permite a los evaluadores alternar a vista de teléfono 390x844 con 1 clic
+   Permite a los evaluadores alternar a vista de teléfono 390x844 con 1 clic en Desktop
    -------------------------------------------------------------------------- */
-body.device-simulator-mode {
-  background-color: #07090C !important;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  min-height: 100vh;
-  padding: 1.5rem 1rem 3rem;
-}
-
-body.device-simulator-mode .simulator-phone-shell {
-  width: 390px;
-  max-width: 390px;
-  height: 844px;
-  max-height: 844px;
-  background-color: var(--bg-primary);
-  border: 11px solid #1E232D;
-  border-radius: 46px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  position: relative;
-  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 0 2px rgba(255, 255, 255, 0.08);
-  display: flex;
-  flex-direction: column;
-}
-
-body.device-simulator-mode .phone-notch {
-  display: block;
-  width: 120px;
-  height: 24px;
-  background-color: #1E232D;
-  border-radius: 0 0 16px 16px;
-  position: sticky;
-  top: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 1000;
-  margin-bottom: -24px;
-}
-
-/* Forzar reglas móviles cuando el simulador está activo */
-body.device-simulator-mode .desktop-nav {
-  display: none !important;
-}
-
-body.device-simulator-mode .mobile-bottom-nav {
-  display: flex !important;
-  position: sticky;
-  bottom: 0.75rem;
-  margin-top: auto;
-  width: calc(100% - 1.5rem);
-}
-
-body.device-simulator-mode .main-content {
-  padding-bottom: 2rem !important;
-}
-
 .simulator-exit-banner {
   display: none;
 }
 
-body.device-simulator-mode .simulator-exit-banner {
-  display: flex;
-  position: fixed;
-  top: 0.5rem;
-  left: 50%;
-  transform: translateX(-50%);
-  background-color: rgba(30, 35, 45, 0.9);
-  color: #F8FAFC;
-  padding: 0.35rem 0.85rem;
-  border-radius: var(--radius-pill);
-  font-size: 0.75rem;
-  font-weight: 600;
-  z-index: 10000;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+@media (min-width: 860px) {
+  body.device-simulator-mode {
+    background-color: #07090C !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    min-height: 100vh;
+    padding: 3.5rem 1rem 2rem !important;
+    overflow-y: auto !important;
+  }
+
+  body.device-simulator-mode .simulator-exit-banner {
+    display: inline-flex;
+    position: fixed;
+    top: 0.75rem;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: rgba(30, 35, 45, 0.95);
+    color: #F8FAFC;
+    padding: 0.4rem 1rem;
+    border-radius: var(--radius-pill);
+    font-size: 0.8rem;
+    font-weight: 600;
+    z-index: 10000;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(8px);
+    transition: all var(--transition-fast);
+  }
+
+  body.device-simulator-mode .simulator-exit-banner:hover {
+    background-color: #2D3748;
+    color: #FFFFFF;
+  }
+
+  body.device-simulator-mode .app-layout {
+    width: 390px !important;
+    max-width: 390px !important;
+    height: 844px !important;
+    max-height: 844px !important;
+    background-color: var(--bg-primary) !important;
+    border: 12px solid #1C212B !important;
+    border-radius: 48px !important;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 0 2px rgba(255, 255, 255, 0.08) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    position: relative !important;
+    margin: 0 auto !important;
+    flex: none !important;
+  }
+
+  /* En modo simulador, activar vista móvil */
+  body.device-simulator-mode .desktop-nav {
+    display: none !important;
+  }
+
+  body.device-simulator-mode #simulator-toggle {
+    display: none !important;
+  }
+
+  body.device-simulator-mode .mobile-bottom-nav {
+    display: flex !important;
+    position: sticky !important;
+    bottom: 0.75rem !important;
+    margin-top: auto !important;
+    width: calc(100% - 1.5rem) !important;
+    max-width: 350px !important;
+  }
+
+  body.device-simulator-mode .main-content {
+    padding-bottom: 2rem !important;
+  }
+
+  body.device-simulator-mode .view-grid-two-cols {
+    grid-template-columns: 1fr !important;
+  }
+
+  body.device-simulator-mode .ventas-workflow-grid {
+    grid-template-columns: 1fr !important;
+  }
 }

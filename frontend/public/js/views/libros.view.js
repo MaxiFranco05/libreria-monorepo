@@ -31,8 +31,10 @@
 
     const alertDiv = document.createElement('div');
     alertDiv.className = type === 'success' ? 'alert alert-success' : 'alert alert-error';
+    alertDiv.setAttribute('role', 'alert');
     alertDiv.textContent = message;
     container.appendChild(alertDiv);
+    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   /**
@@ -52,6 +54,7 @@
       if (message) {
         inputEl.classList.add('is-invalid');
         inputEl.setAttribute('aria-invalid', 'true');
+        inputEl.focus();
       } else {
         inputEl.classList.remove('is-invalid');
         inputEl.removeAttribute('aria-invalid');
@@ -257,14 +260,14 @@
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td><strong>${book.id}</strong></td>
-          <td>${escapeHtml(book.titulo)}</td>
-          <td><code>${escapeHtml(book.isbn)}</code></td>
+          <td style="font-family: var(--font-family-mono); font-weight: 600; color: var(--text-muted);">${book.id}</td>
+          <td style="font-weight: 600;">${escapeHtml(book.titulo)}</td>
+          <td><code class="isbn-code">${escapeHtml(book.isbn)}</code></td>
           <td>${escapeHtml(edName)}</td>
           <td><span class="badge ${genName === 'Sin clasificar' ? 'badge-navy' : ''}">${escapeHtml(genName)}</span></td>
-          <td>${book.stock ?? 0} u.</td>
-          <td style="font-weight: 600;">${formatCurrency(book.precio)}</td>
-          <td>
+          <td style="white-space: nowrap;"><span class="stock-pill"><span class="stock-dot"></span>${book.stock ?? 0} u.</span></td>
+          <td style="font-family: var(--font-family-mono); font-weight: 600; white-space: nowrap;">${formatCurrency(book.precio)}</td>
+          <td style="text-align: right; white-space: nowrap;">
             <button type="button" class="btn btn-secondary btn-pagination" data-book-id="${book.id}">
               Ver Detalle
             </button>
@@ -272,14 +275,6 @@
         `;
 
         tr.querySelector('button').addEventListener('click', () => {
-          if (root.LibreriaApp.views.catalogo && typeof root.LibreriaApp.views.catalogo.loadCatalog === 'function') {
-            // Reutilizar modal de detalle del catálogo
-            const modal = document.getElementById('modal-libro-detalle');
-            if (modal) {
-              root.LibreriaApp.views.catalogo.loadCatalog(); // sincroniza
-            }
-          }
-          // Abrir modal directamente
           openBookModalDirect(book.id);
         });
 
@@ -291,56 +286,9 @@
     }
   }
 
-  async function openBookModalDirect(bookId) {
-    const modal = document.getElementById('modal-libro-detalle');
-    const modalTitle = document.getElementById('modal-libro-titulo');
-    const modalBody = document.getElementById('modal-libro-contenido');
-    if (!modal || !modalBody) return;
-
-    modalTitle.textContent = 'Cargando información...';
-    modalBody.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Cargando información editorial...</p>';
-    if (typeof modal.showModal === 'function') modal.showModal();
-    else modal.setAttribute('open', '');
-
-    try {
-      const book = await root.LibreriaApp.api.getLibro(bookId);
-      modalTitle.textContent = book.titulo;
-      const formatCurrency = root.LibreriaApp.formatters?.formatCurrency || ((v) => `$${Number(v).toFixed(2)}`);
-      const autorias = Array.isArray(book.autorias) ? book.autorias : [];
-
-      modalBody.innerHTML = `
-        <div style="display: flex; flex-direction: column; gap: 0.85rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem;">
-            <div>
-              <span class="badge ${book.genero?.nombre ? '' : 'badge-navy'}">${escapeHtml(book.genero?.nombre || 'Sin clasificar')}</span>
-              <span style="margin-left: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">ISBN: <strong>${escapeHtml(book.isbn)}</strong></span>
-            </div>
-            <div style="font-size: 1.35rem; font-weight: 700; color: var(--accent-navy);">
-              ${formatCurrency(book.precio)}
-            </div>
-          </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
-            <div><strong style="color: var(--text-secondary);">Editorial:</strong> ${escapeHtml(book.editorial?.nombre || 'N/D')}</div>
-            <div><strong style="color: var(--text-secondary);">Disponibilidad:</strong> ${book.stock} ejemplares</div>
-          </div>
-          <h4 style="margin-top: 1rem; color: var(--accent-navy);">Equipo Editorial y Autorías:</h4>
-          <table class="table" style="font-size: 0.9rem;">
-            <thead><tr><th>Orden</th><th>Autor</th><th>Rol</th><th>Nacionalidad</th></tr></thead>
-            <tbody>
-              ${autorias.map((a) => `
-                <tr>
-                  <td>#${a.orden ?? 1}</td>
-                  <td>${escapeHtml(a.autor?.nombre || 'Desconocido')}</td>
-                  <td><span class="badge">${escapeHtml(a.rol)}</span></td>
-                  <td>${escapeHtml(a.autor?.nacionalidad || 'N/D')}</td>
-                </tr>
-              `).join('')}
-            </tbody>
-          </table>
-        </div>
-      `;
-    } catch (e) {
-      modalBody.innerHTML = `<p style="color: var(--color-error);">${escapeHtml(e.message)}</p>`;
+  function openBookModalDirect(bookId) {
+    if (root.LibreriaApp.views.catalogo && typeof root.LibreriaApp.views.catalogo.showBookDetail === 'function') {
+      root.LibreriaApp.views.catalogo.showBookDetail(bookId);
     }
   }
 

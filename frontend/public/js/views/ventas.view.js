@@ -33,8 +33,10 @@
     alertDiv.className = type === 'success'
       ? 'alert alert-success'
       : (type === 'error' ? 'alert alert-error' : 'alert alert-info');
+    alertDiv.setAttribute('role', 'alert');
     alertDiv.textContent = message;
     container.appendChild(alertDiv);
+    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   function setFieldError(errorElementId, inputId, message) {
@@ -51,6 +53,7 @@
       if (message) {
         inputEl.classList.add('is-invalid');
         inputEl.setAttribute('aria-invalid', 'true');
+        inputEl.focus();
       } else {
         inputEl.classList.remove('is-invalid');
         inputEl.removeAttribute('aria-invalid');
@@ -179,20 +182,32 @@
     const selectedOption = bookSelect.options[bookSelect.selectedIndex];
     const titulo = selectedOption ? selectedOption.dataset.titulo : 'Libro';
     const precio = selectedOption ? parseFloat(selectedOption.dataset.precio) : 0;
+    const stock = selectedOption ? parseInt(selectedOption.dataset.stock, 10) : 0;
+
+    // Validación estricta de stock disponible
+    if (cantidad > stock) {
+      setFieldError('error-venta-cantidad', 'venta-cantidad', `Stock insuficiente: sólo hay ${stock} ejemplares disponibles de "${titulo}".`);
+      return;
+    }
 
     // Regla de negocio: un solo renglón por libro (no duplicar libro_id)
     const existingIndex = _draft.renglones.findIndex((r) => r.libro_id === libroId);
     if (existingIndex !== -1) {
-      // Incrementar cantidad existente o advertir
-      _draft.renglones[existingIndex].cantidad += cantidad;
-      _draft.renglones[existingIndex].subtotal = _draft.renglones[existingIndex].cantidad * _draft.renglones[existingIndex].precio;
-      setFeedback(`Se incrementó la cantidad del libro "${titulo}" en el borrador.`, 'info');
+      const nuevaCantidad = _draft.renglones[existingIndex].cantidad + cantidad;
+      if (nuevaCantidad > stock) {
+        setFieldError('error-venta-cantidad', 'venta-cantidad', `No podés agregar más: el pedido alcanzaría ${nuevaCantidad} u. y el stock máximo es de ${stock} u.`);
+        return;
+      }
+      _draft.renglones[existingIndex].cantidad = nuevaCantidad;
+      _draft.renglones[existingIndex].subtotal = nuevaCantidad * _draft.renglones[existingIndex].precio;
+      setFeedback(`Se incrementó la cantidad del libro "${titulo}" en el borrador (${nuevaCantidad} u.).`, 'info');
     } else {
       _draft.renglones.push({
         libro_id: libroId,
         titulo,
         precio,
         cantidad,
+        stock,
         subtotal: cantidad * precio
       });
     }
@@ -243,6 +258,11 @@
       qtyInput.addEventListener('change', (e) => {
         const newQty = parseInt(e.target.value, 10);
         if (isNaN(newQty) || newQty <= 0) {
+          e.target.value = renglon.cantidad;
+          return;
+        }
+        if (renglon.stock !== undefined && newQty > renglon.stock) {
+          setFeedback(`Stock insuficiente para "${renglon.titulo}": sólo hay ${renglon.stock} ejemplares disponibles.`, 'error');
           e.target.value = renglon.cantidad;
           return;
         }
@@ -368,6 +388,10 @@
         setFeedback(`La cantidad para "${r.titulo}" debe ser un entero positivo mayor a 0.`, 'error');
         return;
       }
+      if (r.stock !== undefined && r.cantidad > r.stock) {
+        setFeedback(`No se puede confirmar: "${r.titulo}" solicita ${r.cantidad} u. pero sólo hay ${r.stock} u. en stock.`, 'error');
+        return;
+      }
     }
 
     // Deshabilitar botón mientras se procesa el envío
@@ -394,6 +418,15 @@
 
       // Limpiar formulario después de confirmar y actualizar el historial
       resetDraft();
+
+      // Recargar opciones de libros y catálogo para reflejar de inmediato el stock restado
+      await loadBookOptions();
+      if (root.LibreriaApp.views.catalogo && typeof root.LibreriaApp.views.catalogo.loadCatalog === 'function') {
+        root.LibreriaApp.views.catalogo.loadCatalog({ resetOffset: false });
+      }
+      if (root.LibreriaApp.views.libros && typeof root.LibreriaApp.views.libros.loadBooksTable === 'function') {
+        root.LibreriaApp.views.libros.loadBooksTable();
+      }
 
       if (root.LibreriaApp.views.historial && typeof root.LibreriaApp.views.historial.loadSales === 'function') {
         root.LibreriaApp.views.historial.loadSales({ resetOffset: true });

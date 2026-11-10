@@ -25,8 +25,10 @@
 
     const alertDiv = document.createElement('div');
     alertDiv.className = type === 'success' ? 'alert alert-success' : 'alert alert-error';
+    alertDiv.setAttribute('role', 'alert');
     alertDiv.textContent = message;
     container.appendChild(alertDiv);
+    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   function setFieldError(errorElementId, inputId, message) {
@@ -43,6 +45,7 @@
       if (message) {
         inputEl.classList.add('is-invalid');
         inputEl.setAttribute('aria-invalid', 'true');
+        inputEl.focus();
       } else {
         inputEl.classList.remove('is-invalid');
         inputEl.removeAttribute('aria-invalid');

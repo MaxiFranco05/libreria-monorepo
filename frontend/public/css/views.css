@@ -169,6 +169,10 @@
   gap: 1.5rem;
 }
 
+.view-grid-two-cols > * {
+  min-width: 0;
+}
+
 @media (min-width: 900px) {
   .view-grid-two-cols {
     grid-template-columns: 380px 1fr;
@@ -186,6 +190,10 @@
   display: grid;
   grid-template-columns: 1fr;
   gap: 1.5rem;
+}
+
+.ventas-workflow-grid > * {
+  min-width: 0;
 }
 
 @media (min-width: 992px) {
@@ -364,6 +372,7 @@ dialog.app-modal::backdrop {
   background-color: var(--color-success-bg);
   border-color: transparent;
   font-weight: 600;
+  white-space: nowrap !important;
 }
 
 .modal-body {
