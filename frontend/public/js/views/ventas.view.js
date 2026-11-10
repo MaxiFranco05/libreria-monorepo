@@ -299,16 +299,16 @@
     container.style.display = 'block';
     container.innerHTML = `
       <div class="confirmed-sale-summary">
-        <h4 class="confirmed-sale-title">✓ Venta Confirmada #${venta.id} (Respuesta API 201)</h4>
+        <h4 class="confirmed-sale-title">✓ Comprobante de Venta Emitido #${venta.id}</h4>
         <p style="margin-bottom: 0.5rem;">
           <strong>Fecha:</strong> ${formatDateTime(venta.fecha)} | 
           <strong>Cliente:</strong> ${escapeHtml(venta.cliente?.nombre || 'N/D')} (${escapeHtml(venta.cliente?.email || 'N/D')})
         </p>
-        <table class="table" style="background: #ffffff; border-radius: var(--radius-sm); margin-top: 0.75rem; font-size: 0.9rem;">
+        <table class="table" style="background: var(--bg-surface); border-radius: var(--radius-sm); margin-top: 0.75rem; font-size: 0.9rem;">
           <thead>
             <tr>
               <th>Libro</th>
-              <th>Precio Unitario (Copiado de Catálogo)</th>
+              <th>Precio Unitario</th>
               <th>Cantidad</th>
               <th>Subtotal</th>
             </tr>
@@ -325,8 +325,8 @@
           </tbody>
           <tfoot>
             <tr style="background: var(--bg-surface-alt); font-weight: 700;">
-              <td colspan="3" style="text-align: right;">Total General Confirmado por API:</td>
-              <td style="color: #166534; font-size: 1.1rem;">${formatCurrency(venta.total)}</td>
+              <td colspan="3" style="text-align: right;">Total Facturado:</td>
+              <td style="color: var(--color-success); font-size: 1.15rem;">${formatCurrency(venta.total)}</td>
             </tr>
           </tfoot>
         </table>
@@ -370,11 +370,11 @@
       }
     }
 
-    // Deshabilitar botón mientras se procesa el envío (consigna pág. 3)
+    // Deshabilitar botón mientras se procesa el envío
     const confirmBtn = document.getElementById('btn-confirmar-venta');
     if (confirmBtn) {
       confirmBtn.disabled = true;
-      confirmBtn.textContent = 'Procesando venta en API...';
+      confirmBtn.textContent = 'Emitiendo comprobante...';
     }
     isSubmitting = true;
 
@@ -389,10 +389,10 @@
     try {
       const responseVenta = await root.LibreriaApp.api.createVenta(payload);
 
-      setFeedback(`¡Venta #${responseVenta.id} registrada exitosamente (201 Created)!`, 'success');
+      setFeedback(`¡Venta #${responseVenta.id} registrada exitosamente!`, 'success');
       renderConfirmedSaleSummary(responseVenta);
 
-      // Limpiar formulario después de confirmar y actualizar el historial (consigna pág. 3)
+      // Limpiar formulario después de confirmar y actualizar el historial
       resetDraft();
 
       if (root.LibreriaApp.views.historial && typeof root.LibreriaApp.views.historial.loadSales === 'function') {
@@ -400,13 +400,13 @@
       }
     } catch (err) {
       console.error('[VentasView] Error al confirmar venta:', err);
-      // Mostrar mensaje del servidor ante 409 o 422 y CONSERVAR EL BORRADOR (consigna pág. 3)
-      setFeedback(`Error del servidor (${err.status || 'Red'}): ${err.message}. El borrador ha sido conservado para corrección.`, 'error');
+      // Mostrar mensaje del servidor ante 409 o 422 y CONSERVAR EL BORRADOR
+      setFeedback(`No fue posible procesar la venta: ${err.message}. El borrador se conserva para corrección.`, 'error');
     } finally {
       isSubmitting = false;
       if (confirmBtn) {
         confirmBtn.disabled = false;
-        confirmBtn.textContent = 'Confirmar Venta en API';
+        confirmBtn.textContent = 'Confirmar Venta';
       }
     }
   }

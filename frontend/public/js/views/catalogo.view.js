@@ -107,10 +107,10 @@
     const modalBody = document.getElementById('modal-libro-contenido');
     if (!modal || !modalBody) return;
 
-    modalTitle.textContent = 'Cargando detalle...';
+    modalTitle.textContent = 'Cargando información...';
     modalBody.innerHTML = `
       <div style="text-align: center; padding: 2rem;">
-        <p>Consultando detalle y autorías a <code>GET /libros/${bookId}</code>...</p>
+        <p style="color: var(--text-secondary);">Cargando información editorial y autorías...</p>
       </div>
     `;
 
@@ -129,7 +129,7 @@
 
       const editorialName = (book.editorial && book.editorial.nombre)
         ? book.editorial.nombre
-        : 'Editorial desconocida';
+        : 'Editorial no especificada';
       const generoName = (book.genero && book.genero.nombre)
         ? book.genero.nombre
         : 'Sin clasificar';
@@ -137,7 +137,7 @@
       const autorias = Array.isArray(book.autorias) ? book.autorias : [];
       let autoresHtml = '';
       if (autorias.length === 0) {
-        autoresHtml = '<p class="text-muted" style="font-style: italic;">Sin autores asignados.</p>';
+        autoresHtml = '<p class="text-muted" style="font-style: italic;">Sin autores asociados a esta obra.</p>';
       } else {
         autoresHtml = `
           <table class="table" style="margin-top: 0.5rem; font-size: 0.9rem;">
@@ -164,24 +164,24 @@
       }
 
       modalBody.innerHTML = `
-        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+        <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem;">
             <div>
               <span class="badge ${generoName === 'Sin clasificar' ? 'badge-navy' : ''}">${escapeHtml(generoName)}</span>
               <span style="margin-left: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">ISBN: <strong>${escapeHtml(book.isbn)}</strong></span>
             </div>
-            <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent-navy);">
+            <div style="font-size: 1.35rem; font-weight: 700; color: var(--accent-navy);">
               ${formatCurrency(book.precio)}
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem;">
-            <div><strong>Editorial:</strong> ${escapeHtml(editorialName)}</div>
-            <div><strong>Stock disponible:</strong> ${book.stock !== undefined ? book.stock : 'N/D'} ejemplares</div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.25rem;">
+            <div><strong style="color: var(--text-secondary);">Editorial:</strong> ${escapeHtml(editorialName)}</div>
+            <div><strong style="color: var(--text-secondary);">Disponibilidad:</strong> ${book.stock !== undefined ? book.stock : 'N/D'} ejemplares</div>
           </div>
 
-          <div style="margin-top: 1rem;">
-            <h4 style="margin-bottom: 0.5rem; font-size: 1rem; color: var(--accent-navy);">Autorías registradas (GET /libros/{id}):</h4>
+          <div style="margin-top: 0.75rem;">
+            <h4 style="margin-bottom: 0.5rem; font-size: 1.05rem; color: var(--accent-navy);">Equipo Editorial y Autorías:</h4>
             ${autoresHtml}
           </div>
         </div>

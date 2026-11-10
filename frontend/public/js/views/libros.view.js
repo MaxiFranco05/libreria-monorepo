@@ -297,8 +297,8 @@
     const modalBody = document.getElementById('modal-libro-contenido');
     if (!modal || !modalBody) return;
 
-    modalTitle.textContent = 'Cargando detalle...';
-    modalBody.innerHTML = '<p style="text-align: center;">Consultando libro...</p>';
+    modalTitle.textContent = 'Cargando información...';
+    modalBody.innerHTML = '<p style="text-align: center; color: var(--text-secondary);">Cargando información editorial...</p>';
     if (typeof modal.showModal === 'function') modal.showModal();
     else modal.setAttribute('open', '');
 
@@ -309,10 +309,21 @@
       const autorias = Array.isArray(book.autorias) ? book.autorias : [];
 
       modalBody.innerHTML = `
-        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
-          <div><strong>ISBN:</strong> ${escapeHtml(book.isbn)} | <strong>Precio:</strong> ${formatCurrency(book.precio)} | <strong>Stock:</strong> ${book.stock}</div>
-          <div><strong>Editorial:</strong> ${escapeHtml(book.editorial?.nombre || 'N/D')} | <strong>Género:</strong> ${escapeHtml(book.genero?.nombre || 'Sin clasificar')}</div>
-          <h4 style="margin-top: 1rem; color: var(--accent-navy);">Autorías registradas (GET /libros/${bookId}):</h4>
+        <div style="display: flex; flex-direction: column; gap: 0.85rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem;">
+            <div>
+              <span class="badge ${book.genero?.nombre ? '' : 'badge-navy'}">${escapeHtml(book.genero?.nombre || 'Sin clasificar')}</span>
+              <span style="margin-left: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">ISBN: <strong>${escapeHtml(book.isbn)}</strong></span>
+            </div>
+            <div style="font-size: 1.35rem; font-weight: 700; color: var(--accent-navy);">
+              ${formatCurrency(book.precio)}
+            </div>
+          </div>
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
+            <div><strong style="color: var(--text-secondary);">Editorial:</strong> ${escapeHtml(book.editorial?.nombre || 'N/D')}</div>
+            <div><strong style="color: var(--text-secondary);">Disponibilidad:</strong> ${book.stock} ejemplares</div>
+          </div>
+          <h4 style="margin-top: 1rem; color: var(--accent-navy);">Equipo Editorial y Autorías:</h4>
           <table class="table" style="font-size: 0.9rem;">
             <thead><tr><th>Orden</th><th>Autor</th><th>Rol</th><th>Nacionalidad</th></tr></thead>
             <tbody>
@@ -387,7 +398,7 @@
     const submitBtn = document.getElementById('btn-submit-libro');
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Registrando en API...';
+      submitBtn.textContent = 'Registrando libro...';
     }
 
     const payload = {
@@ -407,7 +418,7 @@
     try {
       const createdBook = await root.LibreriaApp.api.createLibro(payload);
 
-      setFeedback(`¡Libro "${createdBook.titulo}" registrado exitosamente con ID ${createdBook.id}!`, 'success');
+      setFeedback(`¡Libro "${createdBook.titulo}" registrado exitosamente!`, 'success');
 
       // Limpiar formulario y estado de autorías
       const form = document.getElementById('form-libro');
@@ -423,7 +434,7 @@
     } catch (err) {
       console.error('[LibrosView] Error al registrar libro:', err);
       // Mostrar mensaje del servidor ante 409 o 422 sin perder el borrador
-      setFeedback(`Error del servidor (${err.status || 'Red'}): ${err.message}`, 'error');
+      setFeedback(`No fue posible registrar el libro: ${err.message}`, 'error');
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;

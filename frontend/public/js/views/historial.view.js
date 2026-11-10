@@ -34,10 +34,10 @@
     const modalBody = document.getElementById('modal-venta-contenido');
     if (!modal || !modalBody) return;
 
-    modalTitle.textContent = `Detalle de Venta #${ventaId}`;
+    modalTitle.textContent = `Comprobante de Venta #${ventaId}`;
     modalBody.innerHTML = `
       <div style="text-align: center; padding: 2rem;">
-        <p>Consultando comprobante histórico a <code>GET /ventas/${ventaId}</code>...</p>
+        <p style="color: var(--text-secondary);">Cargando comprobante comercial...</p>
       </div>
     `;
 
@@ -55,15 +55,15 @@
         <div style="display: flex; flex-direction: column; gap: 1rem;">
           <div style="background: var(--bg-surface-alt); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.95rem;">
-              <div><strong>ID de Comprobante:</strong> #${venta.id}</div>
+              <div><strong>Comprobante N°:</strong> #${venta.id}</div>
               <div><strong>Fecha y Hora:</strong> ${formatDateTime(venta.fecha)}</div>
               <div><strong>Cliente Comprador:</strong> ${escapeHtml(venta.cliente?.nombre || 'N/D')}</div>
-              <div><strong>Email Cliente:</strong> <code>${escapeHtml(venta.cliente?.email || 'N/D')}</code></div>
+              <div><strong>Correo:</strong> <code>${escapeHtml(venta.cliente?.email || 'N/D')}</code></div>
             </div>
           </div>
 
           <div>
-            <h4 style="margin-bottom: 0.5rem; color: var(--accent-navy);">Renglones de Venta (Importes Históricos Congelados):</h4>
+            <h4 style="margin-bottom: 0.5rem; color: var(--accent-navy);">Detalle de Artículos y Valores Facturados:</h4>
             <div class="table-responsive">
               <table class="table" style="font-size: 0.9rem;">
                 <thead>
@@ -71,7 +71,7 @@
                     <th>Libro ID</th>
                     <th>Título del Libro</th>
                     <th>Cant.</th>
-                    <th>Precio Unit. Histórico</th>
+                    <th>Precio Unitario</th>
                     <th>Subtotal</th>
                   </tr>
                 </thead>
@@ -88,8 +88,8 @@
                 </tbody>
                 <tfoot>
                   <tr style="background: var(--bg-surface-alt); font-weight: 700; font-size: 1rem;">
-                    <td colspan="4" style="text-align: right;">Total Histórico Inmutable:</td>
-                    <td style="color: #166534;">${formatCurrency(venta.total)}</td>
+                    <td colspan="4" style="text-align: right;">Total Facturado:</td>
+                    <td style="color: var(--color-success); font-size: 1.15rem;">${formatCurrency(venta.total)}</td>
                   </tr>
                 </tfoot>
               </table>
@@ -97,12 +97,12 @@
           </div>
 
           <div style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">
-            Nota: Estos precios corresponden exactamente al momento en que se registró la operación. Un cambio posterior en el catálogo mediante PATCH /libros/{id} no altera estos importes.
+            Comprobante inmutable. Los importes reflejan con fidelidad las condiciones comerciales vigentes al momento de la emisión.
           </div>
         </div>
       `;
     } catch (err) {
-      modalBody.innerHTML = `<div class="state-box state-error"><p>Error consultando venta: ${escapeHtml(err.message)}</p></div>`;
+      modalBody.innerHTML = `<div class="state-box state-error"><p>Error consultando comprobante: ${escapeHtml(err.message)}</p></div>`;
     }
   }
 
@@ -172,7 +172,7 @@
             <td style="font-weight: 700; color: #166534;">${formatCurrency(venta.total)}</td>
             <td>
               <button type="button" class="btn btn-secondary btn-pagination" data-sale-id="${venta.id}">
-                Ver Detalle Histórico
+                Ver Comprobante
               </button>
             </td>
           `;

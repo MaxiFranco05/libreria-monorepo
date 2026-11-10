@@ -1,7 +1,7 @@
 /**
  * ============================================================================
- * App - Inicializador Central de la SPA Librería Central (Evaluación Global)
- * Orquestación de módulos, cliente API y enrutador por hash
+ * App - Inicializador Central de la SPA Librería Central
+ * Orquestación de módulos, modo oscuro accesible y enrutador por hash
  * ============================================================================
  */
 
@@ -13,22 +13,52 @@
   root.LibreriaApp = window.LibreriaApp;
 
   /**
+   * Configura el conmutador de modo claro / oscuro accesible con persistencia
+   */
+  function setupThemeToggle() {
+    const btn = document.getElementById('theme-toggle');
+    const icon = document.getElementById('theme-toggle-icon');
+    if (!btn) return;
+
+    function updateThemeUI(theme) {
+      const isDark = theme === 'dark';
+      document.documentElement.setAttribute('data-theme', theme);
+      if (icon) icon.textContent = isDark ? '☀️' : '🌙';
+      btn.setAttribute('aria-label', isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro');
+      btn.setAttribute('title', isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro');
+    }
+
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
+    updateThemeUI(currentTheme);
+
+    btn.addEventListener('click', () => {
+      const activeTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      try {
+        localStorage.setItem('libreria_theme', activeTheme);
+      } catch (e) {}
+      updateThemeUI(activeTheme);
+    });
+  }
+
+  /**
    * Inicializa los subsistemas de la SPA cuando el DOM está completamente cargado
    */
   async function initApp() {
     const app = root.LibreriaApp;
 
-    // 1. Verificación inicial de salud de la API
+    // 1. Configurar Modo Oscuro
+    setupThemeToggle();
+
+    // 2. Verificación de salud silenciosa
     if (app.api && typeof app.api.checkHealth === 'function') {
       try {
-        const health = await app.api.checkHealth();
-        console.info('[LibreriaApp] Conexión establecida con la API FastAPI (/api/health/ready):', health);
+        await app.api.checkHealth();
       } catch (err) {
-        console.warn('[LibreriaApp] Advertencia: la API no responde en /api/health/ready:', err.message);
+        console.warn('[LibreriaApp] Aviso: API no disponible temporalmente:', err.message);
       }
     }
 
-    // 2. Inicializar las vistas disponibles
+    // 3. Inicializar las vistas disponibles
     if (app.views) {
       if (app.views.catalogo && typeof app.views.catalogo.init === 'function') {
         app.views.catalogo.init();
@@ -47,18 +77,15 @@
       }
     }
 
-    // 3. Inicializar el enrutador por hash
+    // 4. Inicializar el enrutador por hash
     if (app.router && typeof app.router.init === 'function') {
       app.router.init();
     } else {
-      console.error('[LibreriaApp] Error crítico: el módulo router no se encuentra disponible.');
+      console.error('[LibreriaApp] Error: el módulo router no se encuentra disponible.');
       return;
     }
-
-    console.info('[LibreriaApp] SPA Librería Central (Evaluación Global) inicializada con éxito.');
   }
 
-  // Esperar a que el DOM esté disponible para iniciar
   if (typeof document !== 'undefined') {
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initApp);

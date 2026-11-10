@@ -113,20 +113,21 @@
     }
 
     resultDiv.style.display = 'block';
-    resultDiv.innerHTML = `Consultando <code>GET /clientes/${clienteId}</code>...`;
+    resultDiv.innerHTML = '<span style="color: var(--text-secondary);">Buscando ficha de cliente...</span>';
 
     try {
       const client = await root.LibreriaApp.api.getCliente(clienteId);
       resultDiv.innerHTML = `
-        <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
           <div>
-            <strong>ID ${client.id}:</strong> ${escapeHtml(client.nombre)} &lt;<code>${escapeHtml(client.email)}</code>&gt;
+            <strong>${escapeHtml(client.nombre)}</strong> &lt;<code>${escapeHtml(client.email)}</code>&gt;
+            <span style="margin-left: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">(ID: #${client.id})</span>
           </div>
-          <span class="badge" style="background-color: #dcfce7; color: #166534;">Encontrado en API</span>
+          <span class="badge" style="background-color: var(--color-success-bg); color: var(--color-success); border-color: var(--color-success);">Cliente Verificado</span>
         </div>
       `;
     } catch (err) {
-      resultDiv.innerHTML = `<span style="color: var(--color-error);">✗ Error: ${escapeHtml(err.message)}</span>`;
+      resultDiv.innerHTML = `<span style="color: var(--color-error);">✗ ${escapeHtml(err.message)}</span>`;
     }
   }
 
@@ -161,13 +162,13 @@
 
     if (submitBtn) {
       submitBtn.disabled = true;
-      submitBtn.textContent = 'Registrando en API...';
+      submitBtn.textContent = 'Registrando cliente...';
     }
 
     try {
       const createdClient = await root.LibreriaApp.api.createCliente({ nombre, email });
 
-      setFeedback(`¡Cliente "${createdClient.nombre}" registrado con éxito con ID ${createdClient.id}!`, 'success');
+      setFeedback(`¡Cliente "${createdClient.nombre}" registrado con éxito!`, 'success');
 
       const form = document.getElementById('form-cliente');
       if (form) form.reset();
@@ -182,7 +183,7 @@
     } catch (err) {
       console.error('[ClientesView] Error al registrar cliente:', err);
       // Mensaje de error 409 (email duplicado) o 422
-      setFeedback(`Error del servidor (${err.status || 'Red'}): ${err.message}`, 'error');
+      setFeedback(`No fue posible registrar el cliente: ${err.message}`, 'error');
     } finally {
       if (submitBtn) {
         submitBtn.disabled = false;
