@@ -265,6 +265,26 @@
   font-size: 0.825rem;
 }
 
+.btn-pagination:disabled,
+.btn-pagination[disabled] {
+  opacity: 0.35;
+  cursor: not-allowed !important;
+  pointer-events: auto !important;
+  background-color: var(--bg-surface-alt);
+  color: var(--text-muted);
+  border-color: var(--border-color);
+  box-shadow: none !important;
+  filter: grayscale(60%);
+}
+
+.btn-pagination:disabled:hover,
+.btn-pagination[disabled]:hover {
+  transform: none !important;
+  background-color: var(--bg-surface-alt) !important;
+  color: var(--text-muted) !important;
+  cursor: not-allowed !important;
+}
+
 /* --------------------------------------------------------------------------
    Diálogos Modales Nativos (<dialog>) - Centrado y Chips Atómicos
    -------------------------------------------------------------------------- */
