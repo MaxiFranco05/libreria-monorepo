@@ -302,7 +302,7 @@
   }
 
   /**
-   * Abre el modal de edición de libro para modificar stock o precio
+   * Abre el modal de edición de libro para modificar título, ISBN, stock o precio
    * @param {Object} book
    */
   function openEditBookModal(book) {
@@ -311,6 +311,7 @@
 
     const idInput = document.getElementById('editar-libro-id');
     const tituloInput = document.getElementById('editar-libro-titulo');
+    const isbnInput = document.getElementById('editar-libro-isbn');
     const stockInput = document.getElementById('editar-libro-stock');
     const precioInput = document.getElementById('editar-libro-precio');
     const pillsContainer = document.getElementById('modal-editar-pills');
@@ -318,12 +319,14 @@
 
     if (idInput) idInput.value = book.id;
     if (tituloInput) tituloInput.value = book.titulo || '';
+    if (isbnInput) isbnInput.value = book.isbn || '';
     if (stockInput) stockInput.value = book.stock !== undefined ? book.stock : 0;
     if (precioInput) precioInput.value = book.precio !== undefined ? Number(book.precio).toFixed(2) : '0.00';
     if (feedback) feedback.innerHTML = '';
 
     if (pillsContainer) {
       pillsContainer.innerHTML = `
+        <span class="meta-pill">ID #${book.id}</span>
         <span class="meta-pill isbn-pill">ISBN ${escapeHtml(book.isbn || '')}</span>
         <span class="meta-pill stock-pill-modal"><span class="stock-dot"></span>${book.stock ?? 0} u. actuales</span>
       `;
@@ -340,6 +343,7 @@
     e.preventDefault();
     const idInput = document.getElementById('editar-libro-id');
     const tituloInput = document.getElementById('editar-libro-titulo');
+    const isbnInput = document.getElementById('editar-libro-isbn');
     const stockInput = document.getElementById('editar-libro-stock');
     const precioInput = document.getElementById('editar-libro-precio');
     const feedback = document.getElementById('editar-libro-feedback');
@@ -347,7 +351,8 @@
     const saveBtn = document.getElementById('btn-guardar-editar-libro');
 
     const bookId = parseInt(idInput.value, 10);
-    const titulo = tituloInput.value.trim();
+    const titulo = tituloInput ? tituloInput.value.trim() : '';
+    const isbn = isbnInput ? isbnInput.value.trim() : '';
     const stock = parseInt(stockInput.value, 10);
     const precio = parseFloat(precioInput.value);
 
@@ -355,6 +360,10 @@
 
     if (!titulo) {
       if (feedback) feedback.innerHTML = '<div class="alert alert-error">El título no puede estar vacío.</div>';
+      return;
+    }
+    if (!isbn) {
+      if (feedback) feedback.innerHTML = '<div class="alert alert-error">El ISBN no puede estar vacío.</div>';
       return;
     }
     if (isNaN(stock) || stock < 0) {
@@ -374,6 +383,7 @@
     try {
       await root.LibreriaApp.api.patchLibro(bookId, {
         titulo,
+        isbn,
         stock,
         precio
       });
@@ -381,7 +391,7 @@
       if (typeof modal.close === 'function') modal.close();
       else modal.removeAttribute('open');
 
-      setFeedback(`¡Libro #${bookId} ("${titulo}") actualizado con éxito! Nuevo stock: ${stock} u.`, 'success');
+      setFeedback(`¡Libro #${bookId} ("${titulo}", ISBN: ${isbn}) actualizado con éxito! Nuevo stock: ${stock} u.`, 'success');
       await loadBooksTable();
 
       // Sincronizar catálogo y ventas si están cargados
@@ -556,6 +566,8 @@
     init,
     loadSelectOptions,
     loadBooksTable,
+    openEditBookModal,
+    handleEditSubmit,
     onActivate() {
       loadSelectOptions();
       loadBooksTable();

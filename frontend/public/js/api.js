@@ -188,6 +188,14 @@
       });
     },
 
+    async patchCliente(id, payload) {
+      if (!id) throw new Error('ID de cliente no especificado');
+      return request(`/clientes/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(payload)
+      });
+    },
+
     // ------------------------------------------------------------------------
     // Ventas e Historial (Ejercicio 3)
     // ------------------------------------------------------------------------

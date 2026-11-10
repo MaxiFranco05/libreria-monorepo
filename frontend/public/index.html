@@ -25,22 +25,22 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/base.css?v=2.4">
-  <link rel="stylesheet" href="css/layout.css?v=2.4">
-  <link rel="stylesheet" href="css/components.css?v=2.4">
-  <link rel="stylesheet" href="css/views.css?v=2.4">
+  <link rel="stylesheet" href="css/base.css?v=2.5">
+  <link rel="stylesheet" href="css/layout.css?v=2.5">
+  <link rel="stylesheet" href="css/components.css?v=2.5">
+  <link rel="stylesheet" href="css/views.css?v=2.5">
   
-  <script defer src="js/utils/formatters.js?v=2.1"></script>
-  <script defer src="js/utils/validators.js?v=2.1"></script>
-  <script defer src="js/api.js?v=2.1"></script>
-  <script defer src="js/state.js?v=2.1"></script>
-  <script defer src="js/views/catalogo.view.js?v=2.1"></script>
-  <script defer src="js/views/libros.view.js?v=2.1"></script>
-  <script defer src="js/views/clientes.view.js?v=2.1"></script>
-  <script defer src="js/views/ventas.view.js?v=2.1"></script>
-  <script defer src="js/views/historial.view.js?v=2.1"></script>
-  <script defer src="js/router.js?v=2.1"></script>
-  <script defer src="js/app.js?v=2.1"></script>
+  <script defer src="js/utils/formatters.js?v=2.5"></script>
+  <script defer src="js/utils/validators.js?v=2.5"></script>
+  <script defer src="js/api.js?v=2.5"></script>
+  <script defer src="js/state.js?v=2.5"></script>
+  <script defer src="js/views/catalogo.view.js?v=2.5"></script>
+  <script defer src="js/views/libros.view.js?v=2.5"></script>
+  <script defer src="js/views/clientes.view.js?v=2.5"></script>
+  <script defer src="js/views/ventas.view.js?v=2.5"></script>
+  <script defer src="js/views/historial.view.js?v=2.5"></script>
+  <script defer src="js/router.js?v=2.5"></script>
+  <script defer src="js/app.js?v=2.5"></script>
 </head>
 <body>
   <!-- Enlace accesible de salto directo -->
@@ -389,9 +389,10 @@
                   <table class="table" id="tabla-clientes">
                     <thead>
                       <tr>
-                        <th scope="col">ID</th>
+                        <th scope="col" style="width: 48px;">ID</th>
                         <th scope="col">Nombre</th>
                         <th scope="col">Correo Electrónico</th>
+                        <th scope="col" style="text-align: right;">Acciones</th>
                       </tr>
                     </thead>
                     <tbody id="clientes-table-body"></tbody>
@@ -610,7 +611,7 @@
         </div>
         <button type="button" class="btn-close-modal" id="btn-cerrar-modal-editar" aria-label="Cerrar ventana">&times;</button>
       </div>
-      <form id="form-editar-libro">
+      <form id="form-editar-libro" novalidate>
         <div class="modal-body">
           <input type="hidden" id="editar-libro-id" />
           <div class="form-group">
@@ -618,7 +619,12 @@
             <input type="text" id="editar-libro-titulo" class="form-control" required />
             <span class="field-error" id="error-editar-titulo"></span>
           </div>
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="form-group">
+            <label class="form-label" for="editar-libro-isbn">ISBN: *</label>
+            <input type="text" id="editar-libro-isbn" class="form-control" required placeholder="Ej. 978-950-04-2455-4" autocomplete="off" />
+            <span class="field-error" id="error-editar-isbn"></span>
+          </div>
+          <div class="modal-form-row-two-cols">
             <div class="form-group">
               <label class="form-label" for="editar-libro-stock">Stock en Depósito: *</label>
               <input type="number" id="editar-libro-stock" class="form-control" min="0" step="1" required />
@@ -635,6 +641,37 @@
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" id="btn-cancelar-editar-libro">Cancelar</button>
           <button type="submit" class="btn btn-primary" id="btn-guardar-editar-libro">Guardar Cambios</button>
+        </div>
+      </form>
+    </dialog>
+
+    <!-- Modal Accesible: Edición de Cliente -->
+    <dialog id="modal-editar-cliente" class="app-modal" aria-labelledby="modal-editar-cliente-titulo">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h3 id="modal-editar-cliente-titulo" class="modal-title">Editar Cliente</h3>
+          <div class="modal-meta-pills" id="modal-editar-cliente-pills"></div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btn-cerrar-modal-editar-cliente" aria-label="Cerrar ventana">&times;</button>
+      </div>
+      <form id="form-editar-cliente" novalidate>
+        <div class="modal-body">
+          <input type="hidden" id="editar-cliente-id" />
+          <div class="form-group">
+            <label class="form-label" for="editar-cliente-nombre">Nombre Completo: *</label>
+            <input type="text" id="editar-cliente-nombre" class="form-control" required placeholder="Ej. María González" autocomplete="off" />
+            <span class="field-error" id="error-editar-cliente-nombre" aria-live="polite"></span>
+          </div>
+          <div class="form-group">
+            <label class="form-label" for="editar-cliente-email">Correo Electrónico: *</label>
+            <input type="email" id="editar-cliente-email" class="form-control" required placeholder="Ej. maria.gonzalez@correo.com" autocomplete="off" />
+            <span class="field-error" id="error-editar-cliente-email" aria-live="polite"></span>
+          </div>
+          <div id="editar-cliente-feedback" class="feedback-container"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="btn-cancelar-editar-cliente">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btn-guardar-editar-cliente">Guardar Cambios</button>
         </div>
       </form>
     </dialog>

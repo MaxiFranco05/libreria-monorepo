@@ -41,6 +41,14 @@ class LibroCreate(SQLModel):
     genero_id: int | None = None
     autores: List[AutorCreateNested] = Field(default_factory=list)
 
+    @field_validator("isbn")
+    @classmethod
+    def validate_isbn(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("El ISBN no puede estar vacío")
+        return cleaned
+
     @field_validator("titulo")
     @classmethod
     def validate_titulo(cls, value: str) -> str:
@@ -59,6 +67,16 @@ class LibroUpdate(SQLModel):
     stock: int | None = Field(default=None, ge=0, description="Stock no puede ser negativo")
     editorial_id: int | None = Field(default=None, ge=1)
     genero_id: int | None = Field(default=None, ge=1)
+
+    @field_validator("isbn")
+    @classmethod
+    def validate_isbn(cls, value: str | None) -> str | None:
+        if value is not None:
+            cleaned = value.strip()
+            if not cleaned:
+                raise ValueError("El ISBN no puede estar vacío")
+            return cleaned
+        return value
 
     @field_validator("titulo")
     @classmethod

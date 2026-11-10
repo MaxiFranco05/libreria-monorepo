@@ -561,12 +561,14 @@
   color: var(--text-primary);
 }
 
-.btn-editar-libro {
+.btn-editar-libro,
+.btn-editar-cliente {
   border-color: var(--border-color);
   color: var(--text-secondary);
 }
 
-.btn-editar-libro:hover {
+.btn-editar-libro:hover,
+.btn-editar-cliente:hover {
   border-color: var(--accent-primary);
   color: var(--accent-primary);
   background-color: var(--accent-soft);
