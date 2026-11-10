@@ -1,0 +1,237 @@
+/* ==========================================================================
+   Layout CSS - Estructura, Grid/Flexbox, Header, Nav, Footer y Responsive
+   ========================================================================== */
+
+/* Contenedores centrados con padding responsivo */
+.header-container,
+.content-container,
+.footer-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* --------------------------------------------------------------------------
+   Header y Barra de Identidad
+   -------------------------------------------------------------------------- */
+.app-header {
+  background-color: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+  box-shadow: var(--shadow-sm);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header-container {
+  display: flex;
+  flex-direction: column;
+  padding-top: 0.85rem;
+  padding-bottom: 0.85rem;
+  gap: 0.85rem;
+}
+
+.brand {
+  display: flex;
+  flex-direction: column;
+}
+
+.brand-title {
+  font-size: 1.6rem;
+  color: var(--accent-navy);
+}
+
+.brand-subtitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* --------------------------------------------------------------------------
+   Navegación Principal (Tabs accesibles)
+   -------------------------------------------------------------------------- */
+.app-nav {
+  width: 100%;
+}
+
+.nav-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  border-bottom: 2px solid var(--border-subtle);
+  padding-bottom: 0.25rem;
+}
+
+.nav-item {
+  display: inline-flex;
+}
+
+.nav-link {
+  display: inline-block;
+  padding: 0.5rem 0.85rem;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  text-decoration: none;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  border-bottom: 3px solid transparent;
+  transition: all var(--transition-fast);
+}
+
+.nav-link:hover {
+  color: var(--accent-primary);
+  background-color: var(--bg-surface-alt);
+  text-decoration: none;
+}
+
+/* Enlace activo indicado semánticamente con aria-current="page" */
+.nav-link[aria-current="page"],
+.nav-link.active {
+  color: var(--accent-navy);
+  font-weight: 600;
+  border-bottom-color: var(--accent-primary);
+  background-color: var(--bg-surface-alt);
+}
+
+/* --------------------------------------------------------------------------
+   Contenido Principal y Secciones de Vista SPA
+   -------------------------------------------------------------------------- */
+.main-content {
+  flex: 1 0 auto;
+  padding: 1.75rem 0 3rem 0;
+}
+
+/* Control estricto de visibilidad de vistas SPA */
+.view-section {
+  display: none;
+  animation: fadeIn 200ms ease-in-out;
+}
+
+.view-section.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0.7;
+    transform: translateY(2px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.view-header {
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.view-title {
+  color: var(--accent-navy);
+  margin-bottom: 0.25rem;
+}
+
+.view-description {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* --------------------------------------------------------------------------
+   Footer Institucional
+   -------------------------------------------------------------------------- */
+.app-footer {
+  background-color: var(--bg-surface);
+  border-top: 1px solid var(--border-color);
+  padding: 1.25rem 0;
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-align: center;
+}
+
+.footer-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.footer-meta {
+  color: var(--text-muted);
+  font-size: 0.775rem;
+}
+
+/* --------------------------------------------------------------------------
+   Media Queries Responsivas (320px, 768px, 1280px)
+   -------------------------------------------------------------------------- */
+
+/* Tablet y Desktop (min-width: 768px) */
+@media (min-width: 768px) {
+  .header-container {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+  }
+
+  .brand-title {
+    font-size: 1.85rem;
+  }
+
+  .app-nav {
+    width: auto;
+  }
+
+  .nav-list {
+    border-bottom: none;
+    padding-bottom: 0;
+    gap: 0.5rem;
+  }
+
+  .nav-link {
+    padding: 0.6rem 1rem;
+  }
+
+  .main-content {
+    padding: 2.25rem 0 4rem 0;
+  }
+
+  .footer-container {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    text-align: left;
+  }
+}
+
+/* Pantallas pequeñas y móviles (<= 480px / 320px) */
+@media (max-width: 480px) {
+  .header-container,
+  .content-container,
+  .footer-container {
+    padding: 0 0.75rem;
+  }
+
+  .brand-title {
+    font-size: 1.4rem;
+  }
+
+  .nav-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(90px, 1fr));
+    gap: 0.25rem;
+  }
+
+  .nav-link {
+    text-align: center;
+    padding: 0.5rem 0.25rem;
+    font-size: 0.85rem;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+}

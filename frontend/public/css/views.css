@@ -1,0 +1,397 @@
+/* ==========================================================================
+   Views CSS - Estilos Contextuales de Vistas SPA
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Placeholders de Vistas
+   -------------------------------------------------------------------------- */
+.placeholder-card {
+  padding: 3rem 1.5rem;
+  text-align: center;
+  background-color: var(--bg-surface-alt);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.placeholder-text {
+  color: var(--text-muted);
+  font-size: 1rem;
+  font-style: italic;
+  margin: 0;
+}
+
+/* --------------------------------------------------------------------------
+   Vista: Catálogo y Buscador Interactivo (C-02)
+   -------------------------------------------------------------------------- */
+.catalogo-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1.25rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.catalogo-toolbar .search-group {
+  margin-bottom: 0;
+}
+
+.catalogo-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .catalogo-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .catalogo-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Tarjeta de Libro (Diseño Editorial) */
+.book-card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 1.25rem;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.book-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--border-subtle);
+  box-shadow: var(--shadow-md);
+}
+
+.book-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.book-card-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.book-card-title {
+  font-family: var(--font-family-serif);
+  font-size: 1.35rem;
+  color: var(--accent-navy);
+  line-height: var(--line-height-tight);
+}
+
+.book-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.925rem;
+  color: var(--text-secondary);
+}
+
+.book-meta-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.35rem;
+}
+
+.book-meta-label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.85rem;
+}
+
+.book-meta-value {
+  color: var(--text-secondary);
+}
+
+.book-meta-isbn {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.book-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.85rem;
+  border-top: 1px solid var(--border-subtle);
+}
+
+.book-price-tag {
+  display: flex;
+  flex-direction: column;
+}
+
+.book-price-label {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.book-price-value {
+  font-family: var(--font-family-serif);
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+  line-height: 1;
+}
+
+/* Estado sin resultados (RN-CAT-05) */
+.no-results-card {
+  grid-column: 1 / -1;
+  padding: 3rem 1.5rem;
+  text-align: center;
+  background-color: var(--bg-surface);
+  border: 1px dashed var(--border-color);
+  border-radius: var(--radius-md);
+}
+
+.no-results-icon {
+  font-size: 2.2rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-muted);
+}
+
+.no-results-message {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--accent-navy);
+  margin-bottom: 0.5rem;
+}
+
+.no-results-hint {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   Estructura de Vistas de Formularios: Libros y Clientes (C-03)
+   -------------------------------------------------------------------------- */
+.form-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+}
+
+@media (min-width: 860px) {
+  .form-layout {
+    grid-template-columns: 3fr 2fr;
+  }
+}
+
+.form-card {
+  max-width: 800px;
+  margin: 0 auto 2rem auto;
+}
+
+.table-card {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+#tabla-clientes th,
+#tabla-clientes td {
+  padding: 0.85rem 1rem;
+}
+
+/* --------------------------------------------------------------------------
+   Estructura de Vista: Ventas (C-04)
+   -------------------------------------------------------------------------- */
+.ventas-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .ventas-layout {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.ventas-form-panel,
+.ventas-cart-panel {
+  max-width: 100%;
+  margin: 0;
+}
+
+.form-divider {
+  border: 0;
+  border-top: 1px solid var(--border-subtle);
+  margin: 1.5rem 0;
+}
+
+.form-section-title {
+  font-family: var(--font-family-serif);
+  font-size: 1.15rem;
+  color: var(--accent-navy);
+  margin-top: 0;
+  margin-bottom: 1rem;
+}
+
+.ventas-summary-box {
+  margin-top: 1.5rem;
+  padding: 1.25rem;
+  background-color: var(--bg-surface-alt);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-subtle);
+}
+
+.ventas-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 1rem;
+}
+
+.ventas-total-label {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.ventas-total-amount {
+  font-family: var(--font-family-serif);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--accent-primary);
+}
+
+.cart-qty-input {
+  width: 65px;
+  padding: 0.35rem 0.5rem;
+  text-align: center;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 0.95rem;
+  background-color: var(--bg-surface);
+  color: var(--text-primary);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.cart-qty-input:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
+.btn-delete-item {
+  padding: 0.35rem 0.65rem;
+  font-size: 0.85rem;
+  border-radius: var(--radius-sm);
+  border: 1px solid #c93b2b;
+  color: #c93b2b;
+  background-color: transparent;
+  cursor: pointer;
+  transition: background-color var(--transition-fast), color var(--transition-fast);
+}
+
+.btn-delete-item:hover {
+  background-color: #c93b2b;
+  color: #ffffff;
+}
+
+.btn-delete-item:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}
+
+#tabla-borrador-venta th,
+#tabla-borrador-venta td {
+  padding: 0.75rem 0.5rem;
+  vertical-align: middle;
+}
+
+/* --------------------------------------------------------------------------
+   Estructura de Vista: Historial (C-04)
+   -------------------------------------------------------------------------- */
+.historial-container {
+  width: 100%;
+}
+
+#tabla-historial-ventas th,
+#tabla-historial-ventas td {
+  padding: 0.85rem 0.75rem;
+  vertical-align: middle;
+}
+
+.historial-detail-row {
+  background-color: var(--bg-surface-alt);
+}
+
+.historial-detail-row[hidden] {
+  display: none;
+}
+
+.historial-detail-cell {
+  padding: 1.25rem !important;
+}
+
+.historial-detail-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0.5rem 0 0.25rem 0;
+  font-size: 0.9rem;
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.historial-detail-table th,
+.historial-detail-table td {
+  padding: 0.6rem 0.85rem;
+  border-bottom: 1px solid var(--border-color);
+  text-align: left;
+}
+
+.historial-detail-table th {
+  background-color: var(--bg-surface-alt);
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.historial-detail-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.btn-toggle-detail {
+  padding: 0.35rem 0.75rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+  border: 1px solid var(--accent-navy);
+  color: var(--accent-navy);
+  background-color: transparent;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-fast);
+}
+
+.btn-toggle-detail:hover {
+  background-color: var(--accent-navy);
+  color: #ffffff;
+}
+
+.btn-toggle-detail:focus-visible {
+  outline: 2px solid var(--border-focus);
+  outline-offset: 1px;
+}

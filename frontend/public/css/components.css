@@ -1,0 +1,353 @@
+/* ==========================================================================
+   Components CSS - Componentes Base, Skip-link, Botones, Tablas y Formularios
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Skip-Link Accesible para Navegación por Teclado
+   -------------------------------------------------------------------------- */
+.skip-link {
+  position: absolute;
+  top: 0;
+  left: 1rem;
+  background-color: var(--accent-navy);
+  color: #FFFFFF;
+  padding: 0.65rem 1.25rem;
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  box-shadow: var(--shadow-md);
+  z-index: 1000;
+  transform: translateY(-100%);
+  transition: transform var(--transition-fast);
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: translateY(0);
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+  text-decoration: none;
+}
+
+/* --------------------------------------------------------------------------
+   Tarjetas (Cards)
+   -------------------------------------------------------------------------- */
+.card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.card:hover {
+  border-color: var(--border-subtle);
+  box-shadow: var(--shadow-md);
+}
+
+.card-title {
+  color: var(--accent-navy);
+  margin-bottom: 0.5rem;
+}
+
+/* --------------------------------------------------------------------------
+   Botones Semánticos
+   -------------------------------------------------------------------------- */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 40px;
+  padding: 0.5rem 1.2rem;
+  font-family: var(--font-family-body);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1;
+  text-align: center;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  user-select: none;
+  transition: all var(--transition-fast);
+}
+
+.btn:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.btn:disabled,
+.btn[aria-disabled="true"] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.btn-primary {
+  background-color: var(--accent-primary);
+  color: #FFFFFF;
+  border-color: var(--accent-primary);
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--accent-primary-hover);
+  border-color: var(--accent-primary-hover);
+  color: #FFFFFF;
+  text-decoration: none;
+}
+
+.btn-secondary {
+  background-color: var(--accent-navy);
+  color: #FFFFFF;
+  border-color: var(--accent-navy);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background-color: var(--accent-navy-hover);
+  border-color: var(--accent-navy-hover);
+  color: #FFFFFF;
+  text-decoration: none;
+}
+
+.btn-outline {
+  background-color: transparent;
+  color: var(--accent-navy);
+  border-color: var(--border-color);
+}
+
+.btn-outline:hover:not(:disabled) {
+  background-color: var(--bg-surface-alt);
+  border-color: var(--accent-navy);
+  text-decoration: none;
+}
+
+/* --------------------------------------------------------------------------
+   Contenedores de Tablas con Scroll Interno Seguro (Prevención de Scroll Global)
+   -------------------------------------------------------------------------- */
+.table-responsive {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  background-color: var(--bg-surface);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.925rem;
+  text-align: left;
+}
+
+.table th,
+.table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border-subtle);
+  vertical-align: middle;
+}
+
+.table th {
+  background-color: var(--bg-surface-alt);
+  color: var(--accent-navy);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+
+.table tbody tr:hover {
+  background-color: var(--bg-primary);
+}
+
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* --------------------------------------------------------------------------
+   Badges y Etiquetas Informativas
+   -------------------------------------------------------------------------- */
+.badge {
+  display: inline-block;
+  padding: 0.25rem 0.6rem;
+  font-size: 0.775rem;
+  font-weight: 600;
+  line-height: 1;
+  border-radius: var(--radius-sm);
+  background-color: var(--accent-soft);
+  color: var(--accent-primary-hover);
+}
+
+.badge-navy {
+  background-color: rgba(29, 53, 87, 0.1);
+  color: var(--accent-navy);
+}
+
+.badge-success {
+  background-color: rgba(42, 123, 76, 0.12);
+  color: var(--color-success);
+}
+
+/* --------------------------------------------------------------------------
+   Form Controles Accesibles (Preparación para C-03 y C-04)
+   -------------------------------------------------------------------------- */
+.form-group {
+  margin-bottom: 1.25rem;
+}
+
+.form-label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 0.4rem;
+  color: var(--text-primary);
+}
+
+.form-control,
+.form-select {
+  width: 100%;
+  padding: 0.55rem 0.85rem;
+  font-family: var(--font-family-body);
+  font-size: 0.95rem;
+  color: var(--text-primary);
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.form-control:focus,
+.form-select:focus {
+  border-color: var(--border-focus);
+}
+
+/* --------------------------------------------------------------------------
+   Alertas y Mensajes del Sistema
+   -------------------------------------------------------------------------- */
+.alert {
+  padding: 0.85rem 1.15rem;
+  border-radius: var(--radius-sm);
+  font-size: 0.925rem;
+  margin-bottom: 1rem;
+  border: 1px solid transparent;
+}
+
+.alert-info {
+  background-color: rgba(29, 53, 87, 0.08);
+  border-color: rgba(29, 53, 87, 0.2);
+  color: var(--accent-navy);
+}
+
+.alert-success {
+  background-color: rgba(42, 123, 76, 0.1);
+  border-color: rgba(42, 123, 76, 0.3);
+  color: var(--color-success);
+}
+
+.alert-error {
+  background-color: rgba(183, 44, 44, 0.1);
+  border-color: rgba(183, 44, 44, 0.3);
+  color: var(--color-error);
+}
+
+
+/* --------------------------------------------------------------------------
+   Formularios y Validaciones (C-03)
+   -------------------------------------------------------------------------- */
+.form-control.is-invalid,
+.form-select.is-invalid {
+  border-color: var(--color-error);
+  background-color: rgba(183, 44, 44, 0.03);
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.form-col {
+  flex: 1 1 200px;
+}
+
+.required {
+  color: var(--color-error);
+  font-weight: 700;
+}
+
+.form-hint {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+.field-error {
+  display: none;
+  font-size: 0.825rem;
+  color: var(--color-error);
+  margin-top: 0.35rem;
+  font-weight: 500;
+}
+
+.field-error.active {
+  display: block;
+}
+
+.form-fieldset {
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  padding: 1rem;
+  background-color: var(--bg-surface-alt);
+}
+
+.form-legend {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  padding: 0 0.5rem;
+}
+
+.checkbox-group {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.65rem;
+  margin-top: 0.5rem;
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9rem;
+  color: var(--text-primary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 1.15rem;
+  height: 1.15rem;
+  accent-color: var(--accent-primary);
+  cursor: pointer;
+}
+
+.form-actions {
+  display: flex;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.card-subtitle {
+  font-size: 1.15rem;
+  color: var(--accent-navy);
+  margin-bottom: 1rem;
+  font-family: var(--font-family-serif);
+}
+
+.table-card {
+  margin-top: 1.5rem;
+}

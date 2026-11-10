@@ -1,0 +1,358 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Librería Central - Sistema de gestión de catálogo, libros, clientes y ventas">
+  <title>Librería Central - Gestión Editorial</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/layout.css">
+  <link rel="stylesheet" href="css/components.css">
+  <link rel="stylesheet" href="css/views.css">
+  <script defer src="js/utils/formatters.js"></script>
+  <script defer src="js/utils/validators.js"></script>
+  <script defer src="js/seed.js"></script>
+  <script defer src="js/storage.js"></script>
+  <script defer src="js/state.js"></script>
+  <script defer src="js/views/catalogo.view.js"></script>
+  <script defer src="js/views/libros.view.js"></script>
+  <script defer src="js/views/clientes.view.js"></script>
+  <script defer src="js/views/ventas.view.js"></script>
+  <script defer src="js/views/historial.view.js"></script>
+  <script defer src="js/router.js"></script>
+  <script defer src="js/app.js"></script>
+</head>
+<body>
+  <!-- Enlace accesible de salto directo al contenido principal -->
+  <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
+
+  <!-- Encabezado y barra de navegación institucional -->
+  <header class="app-header" role="banner">
+    <div class="header-container">
+      <div class="brand">
+        <h1 class="brand-title">Librería Central</h1>
+        <p class="brand-subtitle">Gestión de Catálogo y Ventas</p>
+      </div>
+      <nav class="app-nav" aria-label="Navegación principal">
+        <ul class="nav-list">
+          <li class="nav-item">
+            <a href="#catalogo" class="nav-link" id="nav-catalogo" aria-current="page">Catálogo</a>
+          </li>
+          <li class="nav-item">
+            <a href="#libros" class="nav-link" id="nav-libros">Libros</a>
+          </li>
+          <li class="nav-item">
+            <a href="#clientes" class="nav-link" id="nav-clientes">Clientes</a>
+          </li>
+          <li class="nav-item">
+            <a href="#ventas" class="nav-link" id="nav-ventas">Ventas</a>
+          </li>
+          <li class="nav-item">
+            <a href="#historial" class="nav-link" id="nav-historial">Historial</a>
+          </li>
+        </ul>
+      </nav>
+    </div>
+  </header>
+
+  <!-- Contenedor principal de vistas SPA -->
+  <main id="main-content" class="main-content" tabindex="-1">
+    <div class="content-container">
+      
+      <!-- Vista 1: Catálogo -->
+      <section id="catalogo" class="view-section active" aria-labelledby="title-catalogo">
+        <header class="view-header">
+          <h2 id="title-catalogo" class="view-title" tabindex="-1">Catálogo de Libros</h2>
+          <p class="view-description">Exploración y búsqueda de ejemplares disponibles en el fondo editorial.</p>
+        </header>
+        <div class="view-content" id="catalogo-content">
+          <div class="catalogo-toolbar">
+            <div class="form-group search-group">
+              <label for="catalogo-search" class="form-label">Buscar libro por título:</label>
+              <input type="search" id="catalogo-search" class="form-control" placeholder="Ej. Ficciones, Aleph, Rayuela..." autocomplete="off">
+            </div>
+            <p class="visually-hidden" aria-live="polite" id="catalogo-search-status"></p>
+          </div>
+          <div class="catalogo-grid" id="catalogo-grid">
+            <!-- Las tarjetas de libros se renderizan dinámicamente mediante catalogo.view.js -->
+          </div>
+        </div>
+      </section>
+
+      <!-- Vista 2: Libros -->
+      <section id="libros" class="view-section" aria-labelledby="title-libros">
+        <header class="view-header">
+          <h2 id="title-libros" class="view-title" tabindex="-1">Administración de Libros</h2>
+          <p class="view-description">Formulario de alta e incorporación de nuevos títulos al catálogo.</p>
+        </header>
+        <div class="view-content" id="libros-content">
+          <div class="card form-card">
+            <h3 class="card-subtitle">Registrar Nuevo Libro</h3>
+            <div id="libro-feedback" class="form-feedback" aria-live="polite"></div>
+            <form id="form-libro" class="app-form" novalidate>
+              <div class="form-group">
+                <label for="libro-titulo" class="form-label">Título <span class="required">*</span></label>
+                <input type="text" id="libro-titulo" name="titulo" class="form-control" required placeholder="Ej. El Aleph" autocomplete="off">
+                <span class="field-error" id="error-libro-titulo" aria-live="polite"></span>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group form-col">
+                  <label for="libro-isbn" class="form-label">ISBN <span class="required">*</span></label>
+                  <input type="text" id="libro-isbn" name="isbn" class="form-control" required placeholder="Ej. 978-950-04-2455-4" autocomplete="off">
+                  <small class="form-hint">Se normaliza quitando espacios y guiones.</small>
+                  <span class="field-error" id="error-libro-isbn" aria-live="polite"></span>
+                </div>
+
+                <div class="form-group form-col">
+                  <label for="libro-precio" class="form-label">Precio Unitario ($) <span class="required">*</span></label>
+                  <input type="number" id="libro-precio" name="precio" class="form-control" required min="0.01" step="0.01" placeholder="Ej. 2500.00">
+                  <span class="field-error" id="error-libro-precio" aria-live="polite"></span>
+                </div>
+              </div>
+
+              <div class="form-row">
+                <div class="form-group form-col">
+                  <label for="libro-editorial" class="form-label">Editorial <span class="required">*</span></label>
+                  <select id="libro-editorial" name="editorialId" class="form-control" required>
+                    <option value="">-- Seleccione una editorial --</option>
+                  </select>
+                  <span class="field-error" id="error-libro-editorial" aria-live="polite"></span>
+                </div>
+
+                <div class="form-group form-col">
+                  <label for="libro-genero" class="form-label">Género</label>
+                  <select id="libro-genero" name="generoId" class="form-control">
+                    <option value="">«Sin clasificar»</option>
+                  </select>
+                  <small class="form-hint">Opcional. Por defecto «Sin clasificar».</small>
+                  <span class="field-error" id="error-libro-genero" aria-live="polite"></span>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <fieldset class="form-fieldset" id="fieldset-autores">
+                  <legend class="form-legend">Autores asociados <span class="required">*</span></legend>
+                  <div class="checkbox-group" id="libro-autores-group">
+                    <!-- Checkboxes poblados dinámicamente desde state.autores -->
+                  </div>
+                  <span class="field-error" id="error-libro-autores" aria-live="polite"></span>
+                </fieldset>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="btn-submit-libro">Registrar Libro</button>
+                <button type="reset" class="btn btn-secondary" id="btn-reset-libro">Limpiar</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card table-card">
+            <h3 class="card-subtitle">Listado de Libros Registrados</h3>
+            <div class="table-responsive" id="libros-table-container">
+              <table class="table" id="tabla-libros">
+                <thead>
+                  <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Título</th>
+                    <th scope="col">ISBN</th>
+                    <th scope="col">Editorial</th>
+                    <th scope="col">Género</th>
+                    <th scope="col">Autor(es)</th>
+                    <th scope="col">Precio</th>
+                  </tr>
+                </thead>
+                <tbody id="libros-table-body">
+                  <!-- Filas renderizadas dinámicamente por libros.view.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Vista 3: Clientes -->
+      <section id="clientes" class="view-section" aria-labelledby="title-clientes">
+        <header class="view-header">
+          <h2 id="title-clientes" class="view-title" tabindex="-1">Registro de Clientes</h2>
+          <p class="view-description">Alta y nómina de clientes habilitados para emitir comprobantes de venta.</p>
+        </header>
+        <div class="view-content" id="clientes-content">
+          <div class="card form-card">
+            <h3 class="card-subtitle">Registrar Nuevo Cliente</h3>
+            <div id="cliente-feedback" class="form-feedback" aria-live="polite"></div>
+            <form id="form-cliente" class="app-form" novalidate>
+              <div class="form-row">
+                <div class="form-group form-col">
+                  <label for="cliente-nombre" class="form-label">Nombre Completo <span class="required">*</span></label>
+                  <input type="text" id="cliente-nombre" name="nombreCompleto" class="form-control" required placeholder="Ej. Juan Pérez" autocomplete="off">
+                  <span class="field-error" id="error-cliente-nombre" aria-live="polite"></span>
+                </div>
+
+                <div class="form-group form-col">
+                  <label for="cliente-email" class="form-label">Correo Electrónico <span class="required">*</span></label>
+                  <input type="email" id="cliente-email" name="email" class="form-control" required placeholder="Ej. juan.perez@example.com" autocomplete="off">
+                  <small class="form-hint">Debe ser único en el sistema.</small>
+                  <span class="field-error" id="error-cliente-email" aria-live="polite"></span>
+                </div>
+              </div>
+
+              <div class="form-actions">
+                <button type="submit" class="btn btn-primary" id="btn-submit-cliente">Registrar Cliente</button>
+                <button type="reset" class="btn btn-secondary" id="btn-reset-cliente">Limpiar</button>
+              </div>
+            </form>
+          </div>
+
+          <div class="card table-card">
+            <h3 class="card-subtitle">Nómina de Clientes Registrados</h3>
+            <div class="table-responsive" id="clientes-table-container">
+              <table class="table" id="tabla-clientes">
+                <thead>
+                  <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Nombre Completo</th>
+                    <th scope="col">Correo Electrónico</th>
+                  </tr>
+                </thead>
+                <tbody id="clientes-table-body">
+                  <!-- Filas renderizadas dinámicamente por clientes.view.js -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Vista 4: Ventas -->
+      <section id="ventas" class="view-section" aria-labelledby="title-ventas">
+        <header class="view-header">
+          <h2 id="title-ventas" class="view-title" tabindex="-1">Simulación de Ventas</h2>
+          <p class="view-description">Composición de operaciones, cálculo de importes y congelamiento de precio histórico.</p>
+        </header>
+        <div class="view-content" id="ventas-content">
+          <div class="ventas-layout">
+            
+            <!-- Panel izquierdo: Selección de cliente y agregación de libros -->
+            <div class="card form-card ventas-form-panel">
+              <h3 class="card-subtitle">Datos de la Venta</h3>
+              <div id="venta-feedback" class="form-feedback" aria-live="polite"></div>
+              
+              <!-- Selección de Cliente -->
+              <div class="form-group">
+                <label for="venta-cliente" class="form-label">Cliente Comprador <span class="required">*</span></label>
+                <select id="venta-cliente" name="clienteId" class="form-control" required>
+                  <option value="">-- Seleccione un cliente --</option>
+                </select>
+                <span class="field-error" id="error-venta-cliente" aria-live="polite"></span>
+              </div>
+
+              <hr class="form-divider" aria-hidden="true">
+
+              <h4 class="form-section-title">Agregar Libros al Pedido</h4>
+
+              <!-- Selección de Libro -->
+              <div class="form-group">
+                <label for="venta-libro" class="form-label">Libro del Catálogo <span class="required">*</span></label>
+                <select id="venta-libro" name="libroId" class="form-control">
+                  <option value="">-- Seleccione un libro --</option>
+                </select>
+                <span class="field-error" id="error-venta-libro" aria-live="polite"></span>
+              </div>
+
+              <!-- Cantidad -->
+              <div class="form-group">
+                <label for="venta-cantidad" class="form-label">Cantidad <span class="required">*</span></label>
+                <input type="number" id="venta-cantidad" name="cantidad" class="form-control" min="1" step="1" value="1">
+                <small class="form-hint">Número entero mayor o igual a 1.</small>
+                <span class="field-error" id="error-venta-cantidad" aria-live="polite"></span>
+              </div>
+
+              <button type="button" class="btn btn-secondary btn-block" id="btn-agregar-renglon">
+                Agregar al pedido
+              </button>
+            </div>
+
+            <!-- Panel derecho: Canasta / Borrador del pedido y Confirmación -->
+            <div class="card table-card ventas-cart-panel">
+              <h3 class="card-subtitle">Pedido en Borrador</h3>
+              
+              <div class="table-responsive" id="borrador-table-container">
+                <table class="table" id="tabla-borrador-venta">
+                  <thead>
+                    <tr>
+                      <th scope="col">Libro</th>
+                      <th scope="col">Precio Unit.</th>
+                      <th scope="col">Cantidad</th>
+                      <th scope="col">Subtotal</th>
+                      <th scope="col">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody id="borrador-table-body">
+                    <!-- Renglones en borrador renderizados dinámicamente -->
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Resumen financiero y confirmación -->
+              <div class="ventas-summary-box">
+                <div class="ventas-total-row">
+                  <span class="ventas-total-label">Total de la Orden:</span>
+                  <span class="ventas-total-amount" id="venta-total-general">$0.00</span>
+                </div>
+                <div class="ventas-actions">
+                  <button type="button" class="btn btn-primary btn-lg btn-block" id="btn-confirmar-venta">
+                    Confirmar Venta
+                  </button>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      <!-- Vista 5: Historial -->
+      <section id="historial" class="view-section" aria-labelledby="title-historial">
+        <header class="view-header">
+          <h2 id="title-historial" class="view-title" tabindex="-1">Historial de Ventas</h2>
+          <p class="view-description">Auditoría inmutable de comprobantes emitidos y detalle de renglones.</p>
+        </header>
+        <div class="view-content" id="historial-content">
+          <div class="historial-container">
+            <div id="historial-vacio" class="card placeholder-card" role="status">
+              <p class="placeholder-text">No hay ventas registradas en el sistema todavía.</p>
+            </div>
+            <div class="table-responsive" id="historial-table-container" hidden>
+              <table class="table" id="tabla-historial-ventas">
+                <thead>
+                  <tr>
+                    <th scope="col">ID Venta</th>
+                    <th scope="col">Fecha y Hora</th>
+                    <th scope="col">Cliente</th>
+                    <th scope="col">Total</th>
+                    <th scope="col">Detalle</th>
+                  </tr>
+                </thead>
+                <tbody id="historial-table-body">
+                  <!-- Transacciones confirmadas renderizadas dinámicamente -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Pie de página institucional -->
+  <footer class="app-footer" role="contentinfo">
+    <div class="footer-container">
+      <p class="footer-text">&copy; 2026 Librería Central — Programación III (UTN FRM)</p>
+      <p class="footer-meta">Single Page Application nativa — HTML5 semántico, CSS3 y JavaScript ES6+</p>
+    </div>
+  </footer>
+</body>
+</html>
