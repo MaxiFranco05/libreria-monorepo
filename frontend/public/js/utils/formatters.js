@@ -82,13 +82,13 @@
     if (!editorialId || !Array.isArray(editorialesList)) {
       return 'Editorial desconocida';
     }
-    const found = editorialesList.find((e) => e && e.id === editorialId);
+    const found = editorialesList.find((e) => e && (e.id === editorialId || String(e.id) === String(editorialId)));
     return found && found.nombre ? found.nombre : 'Editorial desconocida';
   }
 
   /**
    * Resuelve el nombre del género o devuelve «Sin clasificar» si es null o no existe (RN-CAT-06)
-   * @param {string|null} generoId - ID del género
+   * @param {string|number|null} generoId - ID del género
    * @param {Array} generosList - Lista de géneros disponibles
    * @returns {string} Nombre del género o «Sin clasificar»
    */
@@ -96,7 +96,7 @@
     if (!generoId || !Array.isArray(generosList)) {
       return 'Sin clasificar';
     }
-    const found = generosList.find((g) => g && g.id === generoId);
+    const found = generosList.find((g) => g && (g.id === generoId || String(g.id) === String(generoId)));
     return found && found.nombre ? found.nombre : 'Sin clasificar';
   }
 

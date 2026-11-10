@@ -80,6 +80,16 @@
         heading.focus({ preventScroll: true });
       }
     }
+
+    // Notificar a la vista activa para que refresque sus datos desde la API si corresponde
+    const views = window.LibreriaApp && window.LibreriaApp.views;
+    if (views && views[activeRoute] && typeof views[activeRoute].onActivate === 'function') {
+      try {
+        views[activeRoute].onActivate();
+      } catch (err) {
+        console.warn(`[Router] Error al ejecutar onActivate en ${activeRoute}:`, err);
+      }
+    }
   }
 
   /**

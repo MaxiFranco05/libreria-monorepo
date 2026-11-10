@@ -1,10 +1,11 @@
 /**
  * ============================================================================
- * Historial View - Consulta Auditable y Desglose Inmutable de Ventas (C-04)
+ * Historial View - Consulta Auditable y Desglose Inmutable (Ejercicio 3)
  * ============================================================================
- * Presenta el listado maestro de ventas confirmadas y su desglose por renglones,
- * garantizando la exhibición estricta del precio unitario histórico congelado
- * sin recalcular jamás desde el catálogo (RN-VNT-06, RN-VNT-07, Regla Dura #7).
+ * Consulta el listado de ventas mediante GET /ventas/ con limit y offset,
+ * y permite abrir el desglose histórico inmutable con GET /ventas/{id},
+ * comprobando que los importes y precios unitarios históricos se conservan
+ * inalterados ante futuros cambios de precio en el catálogo.
  */
 
 (function () {
@@ -14,221 +15,241 @@
   root.LibreriaApp = root.LibreriaApp || {};
   root.LibreriaApp.views = root.LibreriaApp.views || {};
 
-  /**
-   * Conmuta la visibilidad accesible del detalle de renglones de una venta
-   * @param {string} saleId - ID de la venta
-   */
-  function toggleDetail(saleId) {
-    if (typeof document === 'undefined') return;
-    const detailRow = document.getElementById(`detalle-venta-${saleId}`);
-    const toggleBtn = document.getElementById(`btn-toggle-${saleId}`);
-    if (!detailRow || !toggleBtn) return;
+  const PAGE_LIMIT = 15;
+  let currentOffset = 0;
+  let isLoading = false;
 
-    const isHidden = detailRow.hasAttribute('hidden');
-    if (isHidden) {
-      detailRow.removeAttribute('hidden');
-      toggleBtn.setAttribute('aria-expanded', 'true');
-      toggleBtn.textContent = 'Ocultar detalle';
-    } else {
-      detailRow.setAttribute('hidden', '');
-      toggleBtn.setAttribute('aria-expanded', 'false');
-      toggleBtn.textContent = 'Ver detalle';
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  /**
+   * Abre el modal accesible para inspeccionar el detalle histórico de una venta (GET /ventas/{id})
+   * @param {number} ventaId
+   */
+  async function showSaleDetail(ventaId) {
+    const modal = document.getElementById('modal-venta-detalle');
+    const modalTitle = document.getElementById('modal-venta-titulo');
+    const modalBody = document.getElementById('modal-venta-contenido');
+    if (!modal || !modalBody) return;
+
+    modalTitle.textContent = `Detalle de Venta #${ventaId}`;
+    modalBody.innerHTML = `
+      <div style="text-align: center; padding: 2rem;">
+        <p>Consultando comprobante histórico a <code>GET /ventas/${ventaId}</code>...</p>
+      </div>
+    `;
+
+    if (typeof modal.showModal === 'function') modal.showModal();
+    else modal.setAttribute('open', '');
+
+    try {
+      const venta = await root.LibreriaApp.api.getVenta(ventaId);
+      const formatCurrency = root.LibreriaApp.formatters?.formatCurrency || ((v) => `$${Number(v).toFixed(2)}`);
+      const formatDateTime = root.LibreriaApp.formatters?.formatDateTime || ((v) => String(v));
+
+      const renglones = Array.isArray(venta.renglones) ? venta.renglones : [];
+
+      modalBody.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <div style="background: var(--bg-surface-alt); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.95rem;">
+              <div><strong>ID de Comprobante:</strong> #${venta.id}</div>
+              <div><strong>Fecha y Hora:</strong> ${formatDateTime(venta.fecha)}</div>
+              <div><strong>Cliente Comprador:</strong> ${escapeHtml(venta.cliente?.nombre || 'N/D')}</div>
+              <div><strong>Email Cliente:</strong> <code>${escapeHtml(venta.cliente?.email || 'N/D')}</code></div>
+            </div>
+          </div>
+
+          <div>
+            <h4 style="margin-bottom: 0.5rem; color: var(--accent-navy);">Renglones de Venta (Importes Históricos Congelados):</h4>
+            <div class="table-responsive">
+              <table class="table" style="font-size: 0.9rem;">
+                <thead>
+                  <tr>
+                    <th>Libro ID</th>
+                    <th>Título del Libro</th>
+                    <th>Cant.</th>
+                    <th>Precio Unit. Histórico</th>
+                    <th>Subtotal</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${renglones.map((r) => `
+                    <tr>
+                      <td>#${r.libro_id}</td>
+                      <td><strong>${escapeHtml(r.titulo)}</strong></td>
+                      <td>${r.cantidad} u.</td>
+                      <td>${formatCurrency(r.precio_unitario)}</td>
+                      <td style="font-weight: 600;">${formatCurrency(r.subtotal)}</td>
+                    </tr>
+                  `).join('')}
+                </tbody>
+                <tfoot>
+                  <tr style="background: var(--bg-surface-alt); font-weight: 700; font-size: 1rem;">
+                    <td colspan="4" style="text-align: right;">Total Histórico Inmutable:</td>
+                    <td style="color: #166534;">${formatCurrency(venta.total)}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+
+          <div style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">
+            Nota: Estos precios corresponden exactamente al momento en que se registró la operación. Un cambio posterior en el catálogo mediante PATCH /libros/{id} no altera estos importes.
+          </div>
+        </div>
+      `;
+    } catch (err) {
+      modalBody.innerHTML = `<div class="state-box state-error"><p>Error consultando venta: ${escapeHtml(err.message)}</p></div>`;
     }
   }
 
   /**
-   * Renderiza la tabla maestra de transacciones confirmadas en el DOM (sin innerHTML)
-   * @param {Array} [salesList] - Lista opcional de ventas (consulta state.getVentas() por defecto)
+   * Carga el listado paginado de ventas desde la API mediante GET /ventas/
    */
-  function renderTable(salesList) {
-    if (typeof document === 'undefined') return;
+  async function loadSales({ resetOffset = false } = {}) {
+    if (isLoading) return;
+    isLoading = true;
 
-    const state = root.LibreriaApp.state;
-    const formatters = root.LibreriaApp.formatters;
+    if (resetOffset) currentOffset = 0;
 
-    const sales = salesList || (state && typeof state.getVentas === 'function' ? state.getVentas() : (state ? state.getSales() : []));
-    const clients = state && typeof state.getClients === 'function' ? state.getClients() : [];
-
-    const emptyContainer = document.getElementById('historial-vacio');
-    const tableContainer = document.getElementById('historial-table-container');
     const tbody = document.getElementById('historial-table-body');
+    const stateContainer = document.getElementById('historial-state');
+    const pagination = document.getElementById('historial-pagination');
+    const pageInfo = document.getElementById('historial-pagination-info');
+    const prevBtn = document.getElementById('btn-historial-prev');
+    const nextBtn = document.getElementById('btn-historial-next');
 
-    if (!tbody) return;
+    if (stateContainer) stateContainer.innerHTML = '';
+    if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;">Cargando historial de ventas desde la API...</td></tr>';
 
-    while (tbody.firstChild) {
-      tbody.removeChild(tbody.firstChild);
-    }
+    try {
+      const formatCurrency = root.LibreriaApp.formatters?.formatCurrency || ((v) => `$${Number(v).toFixed(2)}`);
+      const formatDateTime = root.LibreriaApp.formatters?.formatDateTime || ((v) => String(v));
 
-    if (!Array.isArray(sales) || sales.length === 0) {
-      if (emptyContainer) {
-        emptyContainer.removeAttribute('hidden');
-        emptyContainer.style.display = '';
-      }
-      if (tableContainer) {
-        tableContainer.setAttribute('hidden', '');
-        tableContainer.style.display = 'none';
-      }
-      return;
-    }
-
-    if (emptyContainer) {
-      emptyContainer.setAttribute('hidden', '');
-      emptyContainer.style.display = 'none';
-    }
-    if (tableContainer) {
-      tableContainer.removeAttribute('hidden');
-      tableContainer.style.display = '';
-    }
-
-    sales.forEach((sale) => {
-      if (!sale) return;
-
-      // Fila Maestra de la Venta
-      const trMaster = document.createElement('tr');
-      trMaster.className = 'historial-master-row';
-
-      // 1. ID Venta
-      const tdId = document.createElement('td');
-      tdId.textContent = sale.id;
-      trMaster.appendChild(tdId);
-
-      // 2. Fecha y Hora formateada
-      const tdFecha = document.createElement('td');
-      tdFecha.textContent = formatters && typeof formatters.formatDateTime === 'function'
-        ? formatters.formatDateTime(sale.fecha)
-        : String(sale.fecha);
-      trMaster.appendChild(tdFecha);
-
-      // 3. Cliente
-      const tdCliente = document.createElement('td');
-      tdCliente.textContent = formatters && typeof formatters.getClientName === 'function'
-        ? formatters.getClientName(sale.clienteId, clients)
-        : (sale.clienteId || 'Cliente no especificado');
-      trMaster.appendChild(tdCliente);
-
-      // 4. Total general
-      const tdTotal = document.createElement('td');
-      tdTotal.style.fontWeight = '600';
-      tdTotal.textContent = formatters && typeof formatters.formatCurrency === 'function'
-        ? formatters.formatCurrency(sale.total)
-        : `$${Number(sale.total).toFixed(2)}`;
-      trMaster.appendChild(tdTotal);
-
-      // 5. Botón accesible para expandir/colapsar renglones
-      const tdAcciones = document.createElement('td');
-      const btnDetail = document.createElement('button');
-      btnDetail.type = 'button';
-      btnDetail.className = 'btn-toggle-detail';
-      btnDetail.id = `btn-toggle-${sale.id}`;
-      btnDetail.setAttribute('aria-expanded', 'false');
-      btnDetail.setAttribute('aria-controls', `detalle-venta-${sale.id}`);
-      btnDetail.textContent = 'Ver detalle';
-      btnDetail.addEventListener('click', () => {
-        toggleDetail(sale.id);
-      });
-      tdAcciones.appendChild(btnDetail);
-      trMaster.appendChild(tdAcciones);
-
-      tbody.appendChild(trMaster);
-
-      // Fila de Desglose de Renglones (oculta inicialmente)
-      const trDetail = document.createElement('tr');
-      trDetail.id = `detalle-venta-${sale.id}`;
-      trDetail.className = 'historial-detail-row';
-      trDetail.setAttribute('hidden', '');
-
-      const tdDetailColspan = document.createElement('td');
-      tdDetailColspan.colSpan = 5;
-      tdDetailColspan.className = 'historial-detail-cell';
-
-      // Sub-tabla semántica de renglones históricos
-      const subTable = document.createElement('table');
-      subTable.className = 'historial-detail-table';
-
-      const thead = document.createElement('thead');
-      const trHead = document.createElement('tr');
-
-      const thLibro = document.createElement('th');
-      thLibro.textContent = 'Libro';
-      trHead.appendChild(thLibro);
-
-      const thCant = document.createElement('th');
-      thCant.textContent = 'Cantidad';
-      trHead.appendChild(thCant);
-
-      const thPrecioHist = document.createElement('th');
-      thPrecioHist.textContent = 'Precio Unitario Histórico';
-      trHead.appendChild(thPrecioHist);
-
-      const thSubtotal = document.createElement('th');
-      thSubtotal.textContent = 'Subtotal';
-      trHead.appendChild(thSubtotal);
-
-      thead.appendChild(trHead);
-      subTable.appendChild(thead);
-
-      const tbodyDetail = document.createElement('tbody');
-
-      const renglones = Array.isArray(sale.renglones) ? sale.renglones : [];
-      renglones.forEach((r) => {
-        const trItem = document.createElement('tr');
-
-        // IMPORTANTE (Regla Dura #7): Se utiliza exclusivamente el snapshot congelado en el renglón.
-        // No se consulta el catálogo de libros.
-        const tdItemLibro = document.createElement('td');
-        tdItemLibro.textContent = r.titulo;
-        trItem.appendChild(tdItemLibro);
-
-        const tdItemCant = document.createElement('td');
-        tdItemCant.textContent = String(r.cantidad);
-        trItem.appendChild(tdItemCant);
-
-        const tdItemPrecio = document.createElement('td');
-        tdItemPrecio.textContent = formatters && typeof formatters.formatCurrency === 'function'
-          ? formatters.formatCurrency(r.precioUnitario)
-          : `$${Number(r.precioUnitario).toFixed(2)}`;
-        trItem.appendChild(tdItemPrecio);
-
-        const tdItemSubtotal = document.createElement('td');
-        tdItemSubtotal.textContent = formatters && typeof formatters.formatCurrency === 'function'
-          ? formatters.formatCurrency(r.subtotal)
-          : `$${Number(r.subtotal).toFixed(2)}`;
-        trItem.appendChild(tdItemSubtotal);
-
-        tbodyDetail.appendChild(trItem);
+      const sales = await root.LibreriaApp.api.getVentas({
+        limit: PAGE_LIMIT,
+        offset: currentOffset
       });
 
-      subTable.appendChild(tbodyDetail);
-      tdDetailColspan.appendChild(subTable);
-      trDetail.appendChild(tdDetailColspan);
+      const salesList = Array.isArray(sales) ? sales : [];
 
-      tbody.appendChild(trDetail);
-    });
+      if (salesList.length === 0) {
+        if (currentOffset === 0) {
+          if (tbody) tbody.innerHTML = '';
+          if (stateContainer) {
+            stateContainer.innerHTML = `
+              <div class="state-box state-empty">
+                <div class="state-icon" aria-hidden="true">🧾</div>
+                <div class="state-title">No hay ventas registradas</div>
+                <p class="state-message">Aún no se han emitido ventas en el sistema. Podés registrar una nueva en la sección Ventas.</p>
+              </div>
+            `;
+          }
+        } else {
+          if (tbody) tbody.innerHTML = '<tr><td colspan="5" style="text-align: center;" class="text-muted">No hay más ventas en esta página.</td></tr>';
+        }
+
+        if (pagination) {
+          pagination.hidden = currentOffset === 0;
+          if (prevBtn) prevBtn.disabled = currentOffset === 0;
+          if (nextBtn) nextBtn.disabled = true;
+          if (pageInfo) pageInfo.textContent = `Página ${Math.floor(currentOffset / PAGE_LIMIT) + 1}`;
+        }
+        return;
+      }
+
+      if (tbody) {
+        tbody.innerHTML = '';
+        salesList.forEach((venta) => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><strong>#${venta.id}</strong></td>
+            <td>${formatDateTime(venta.fecha)}</td>
+            <td>Cliente ID: <strong>${venta.cliente_id}</strong></td>
+            <td style="font-weight: 700; color: #166534;">${formatCurrency(venta.total)}</td>
+            <td>
+              <button type="button" class="btn btn-secondary btn-pagination" data-sale-id="${venta.id}">
+                Ver Detalle Histórico
+              </button>
+            </td>
+          `;
+
+          tr.querySelector('button').addEventListener('click', () => {
+            showSaleDetail(venta.id);
+          });
+
+          tbody.appendChild(tr);
+        });
+      }
+
+      if (pagination) {
+        pagination.hidden = false;
+        const pageNum = Math.floor(currentOffset / PAGE_LIMIT) + 1;
+        if (pageInfo) pageInfo.textContent = `Página ${pageNum} (mostrando ${salesList.length} ventas)`;
+        if (prevBtn) prevBtn.disabled = currentOffset === 0;
+        if (nextBtn) nextBtn.disabled = salesList.length < PAGE_LIMIT;
+      }
+    } catch (err) {
+      console.error('[HistorialView] Error cargando ventas:', err);
+      if (tbody) tbody.innerHTML = '';
+      if (stateContainer) {
+        stateContainer.innerHTML = `
+          <div class="state-box state-error">
+            <div class="state-icon" aria-hidden="true">⚠️</div>
+            <div class="state-title">Error al consultar el historial de ventas</div>
+            <p class="state-message">${escapeHtml(err.message)}</p>
+          </div>
+        `;
+      }
+    } finally {
+      isLoading = false;
+    }
   }
 
-  /**
-   * Inicializa la vista de historial y suscribe a eventos reactivos
-   */
   function init() {
-    if (typeof document === 'undefined') return;
-
-    const state = root.LibreriaApp.state;
-    if (state && typeof state.on === 'function') {
-      state.on('ventas:updated', () => {
-        renderTable();
-      });
-      state.on('clientes:updated', () => {
-        renderTable();
+    const prevBtn = document.getElementById('btn-historial-prev');
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        if (currentOffset >= PAGE_LIMIT) {
+          currentOffset -= PAGE_LIMIT;
+          loadSales({ resetOffset: false });
+        }
       });
     }
 
-    renderTable();
+    const nextBtn = document.getElementById('btn-historial-next');
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        currentOffset += PAGE_LIMIT;
+        loadSales({ resetOffset: false });
+      });
+    }
+
+    // Modal close listeners
+    const modal = document.getElementById('modal-venta-detalle');
+    const closeBtn = document.getElementById('btn-cerrar-modal-venta');
+    const okBtn = document.getElementById('btn-modal-venta-ok');
+    const closeModal = () => {
+      if (!modal) return;
+      if (typeof modal.close === 'function') modal.close();
+      else modal.removeAttribute('open');
+    };
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (okBtn) okBtn.addEventListener('click', closeModal);
+
+    loadSales({ resetOffset: true });
   }
 
   const historialView = {
     init,
-    renderTable,
-    toggleDetail
+    loadSales,
+    showSaleDetail,
+    onActivate() {
+      loadSales({ resetOffset: false });
+    }
   };
 
   root.LibreriaApp.views.historial = historialView;

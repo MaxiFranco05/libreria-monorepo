@@ -1,8 +1,13 @@
 /**
  * ============================================================================
  * Vista: Catálogo de Libros (js/views/catalogo.view.js)
- * Renderizado de libros y motor de búsqueda en tiempo real por título
- * Cumple RN-CAT-01 a RN-CAT-06 y directrices de seguridad XSS
+ * Conexión nativa con FastAPI (GET /api/libros/ y GET /api/libros/{id})
+ * Cumple con el Ejercicio 1 de la evaluación Global:
+ * - Búsqueda parcial por título (insensible a mayúsculas/minúsculas)
+ * - Paginación limit / offset con reinicio de desplazamiento al filtrar
+ * - 4 estados visuales: Carga, Lista vacía, Sin coincidencias, Error de conexión
+ * - Renderizado de Título, ISBN, Precio, Editorial y Género («Sin clasificar» si null)
+ * - Consulta individual de autores mediante GET /libros/{id}
  * ============================================================================
  */
 
@@ -13,35 +18,211 @@
   root.LibreriaApp = root.LibreriaApp || {};
   root.LibreriaApp.views = root.LibreriaApp.views || {};
 
+  const PAGE_LIMIT = 12;
+  let currentOffset = 0;
+  let currentQuery = '';
+  let isLoading = false;
+  let lastLoadedBooks = [];
+
   /**
-   * Crea de forma 100% segura el nodo DOM para una tarjeta de libro
-   * Sin utilizar .innerHTML para prevenir vulnerabilidades XSS
-   * @param {Object} book - Entidad de libro
-   * @param {Object} helpers - Utilidades de formato y colecciones de estado
-   * @returns {HTMLElement} Elemento article .book-card
+   * Renderiza el estado visual correspondiente dentro de #catalogo-state
+   * @param {'loading'|'empty'|'no-results'|'error'|'none'} state
+   * @param {string} [errorMessage='']
    */
-  function createBookCardElement(book, { formatters, editoriales, generos, autores }) {
+  function renderState(state, errorMessage = '') {
+    const container = document.getElementById('catalogo-state');
+    const grid = document.getElementById('catalogo-grid');
+    const pagination = document.getElementById('catalogo-pagination');
+    if (!container) return;
+
+    container.innerHTML = '';
+
+    if (state === 'none') {
+      container.style.display = 'none';
+      if (grid) grid.style.display = 'grid';
+      return;
+    }
+
+    if (grid) grid.style.display = 'none';
+    if (pagination) pagination.hidden = true;
+    container.style.display = 'block';
+
+    const box = document.createElement('div');
+    box.className = `state-box state-${state}`;
+
+    if (state === 'loading') {
+      box.innerHTML = `
+        <div class="state-icon" aria-hidden="true">⏳</div>
+        <div class="state-title">Cargando catálogo...</div>
+        <p class="state-message">Consultando ejemplares disponibles en la API.</p>
+      `;
+    } else if (state === 'empty') {
+      box.innerHTML = `
+        <div class="state-icon" aria-hidden="true">📚</div>
+        <div class="state-title">No hay libros registrados</div>
+        <p class="state-message">La base de datos no contiene libros en este momento. Podés registrar uno nuevo en la sección Libros.</p>
+      `;
+    } else if (state === 'no-results') {
+      box.innerHTML = `
+        <div class="state-icon" aria-hidden="true">🔍</div>
+        <div class="state-title">Sin coincidencias</div>
+        <p class="state-message">No se encontraron libros que coincidan con <strong>"${escapeHtml(currentQuery)}"</strong>.</p>
+      `;
+    } else if (state === 'error') {
+      box.innerHTML = `
+        <div class="state-icon" aria-hidden="true">⚠️</div>
+        <div class="state-title">Error de conexión con la API</div>
+        <p class="state-message">${escapeHtml(errorMessage || 'No se pudo conectar con el servidor.')}</p>
+        <button type="button" class="btn btn-primary" id="btn-catalogo-retry">Reintentar</button>
+      `;
+    }
+
+    container.appendChild(box);
+
+    const retryBtn = document.getElementById('btn-catalogo-retry');
+    if (retryBtn) {
+      retryBtn.addEventListener('click', () => {
+        loadCatalog({ resetOffset: false });
+      });
+    }
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  /**
+   * Abre el modal con el detalle completo del libro y sus autorías (GET /libros/{id})
+   * @param {number} bookId
+   */
+  async function showBookDetail(bookId) {
+    const modal = document.getElementById('modal-libro-detalle');
+    const modalTitle = document.getElementById('modal-libro-titulo');
+    const modalBody = document.getElementById('modal-libro-contenido');
+    if (!modal || !modalBody) return;
+
+    modalTitle.textContent = 'Cargando detalle...';
+    modalBody.innerHTML = `
+      <div style="text-align: center; padding: 2rem;">
+        <p>Consultando detalle y autorías a <code>GET /libros/${bookId}</code>...</p>
+      </div>
+    `;
+
+    if (typeof modal.showModal === 'function') {
+      modal.showModal();
+    } else {
+      modal.setAttribute('open', '');
+    }
+
+    try {
+      const book = await root.LibreriaApp.api.getLibro(bookId);
+      modalTitle.textContent = book.titulo || 'Detalle del Libro';
+
+      const formatters = root.LibreriaApp.formatters || {};
+      const formatCurrency = formatters.formatCurrency || ((v) => `$${Number(v).toFixed(2)}`);
+
+      const editorialName = (book.editorial && book.editorial.nombre)
+        ? book.editorial.nombre
+        : 'Editorial desconocida';
+      const generoName = (book.genero && book.genero.nombre)
+        ? book.genero.nombre
+        : 'Sin clasificar';
+
+      const autorias = Array.isArray(book.autorias) ? book.autorias : [];
+      let autoresHtml = '';
+      if (autorias.length === 0) {
+        autoresHtml = '<p class="text-muted" style="font-style: italic;">Sin autores asignados.</p>';
+      } else {
+        autoresHtml = `
+          <table class="table" style="margin-top: 0.5rem; font-size: 0.9rem;">
+            <thead>
+              <tr>
+                <th scope="col">Orden</th>
+                <th scope="col">Autor</th>
+                <th scope="col">Rol</th>
+                <th scope="col">Nacionalidad</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${autorias.map((a) => `
+                <tr>
+                  <td><strong>#${a.orden ?? 1}</strong></td>
+                  <td>${escapeHtml(a.autor ? a.autor.nombre : 'Autor desconocido')}</td>
+                  <td><span class="badge">${escapeHtml(a.rol || 'autor')}</span></td>
+                  <td>${escapeHtml(a.autor ? (a.autor.nacionalidad || 'N/D') : 'N/D')}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `;
+      }
+
+      modalBody.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
+            <div>
+              <span class="badge ${generoName === 'Sin clasificar' ? 'badge-navy' : ''}">${escapeHtml(generoName)}</span>
+              <span style="margin-left: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">ISBN: <strong>${escapeHtml(book.isbn)}</strong></span>
+            </div>
+            <div style="font-size: 1.25rem; font-weight: 700; color: var(--accent-navy);">
+              ${formatCurrency(book.precio)}
+            </div>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-top: 0.5rem;">
+            <div><strong>Editorial:</strong> ${escapeHtml(editorialName)}</div>
+            <div><strong>Stock disponible:</strong> ${book.stock !== undefined ? book.stock : 'N/D'} ejemplares</div>
+          </div>
+
+          <div style="margin-top: 1rem;">
+            <h4 style="margin-bottom: 0.5rem; font-size: 1rem; color: var(--accent-navy);">Autorías registradas (GET /libros/{id}):</h4>
+            ${autoresHtml}
+          </div>
+        </div>
+      `;
+    } catch (err) {
+      modalTitle.textContent = 'Error';
+      modalBody.innerHTML = `
+        <div class="state-box state-error" style="margin: 0;">
+          <p>No se pudo cargar el detalle del libro: ${escapeHtml(err.message)}</p>
+        </div>
+      `;
+    }
+  }
+
+  /**
+   * Crea el elemento tarjeta para un libro del catálogo
+   * @param {Object} book - Libro retornado por GET /libros/
+   * @param {Object} helpers - Diccionarios y utilidades
+   * @returns {HTMLElement}
+   */
+  function createBookCard(book, { formatters, editoriales, generos }) {
     const card = document.createElement('article');
     card.className = 'book-card';
     card.setAttribute('aria-labelledby', `book-title-${book.id}`);
 
-    // --- Header de la tarjeta ---
     const header = document.createElement('header');
     header.className = 'book-card-header';
 
-    const badgesContainer = document.createElement('div');
-    badgesContainer.className = 'book-card-badges';
+    const badges = document.createElement('div');
+    badges.className = 'book-card-badges';
 
     const genreBadge = document.createElement('span');
-    const generoNombre = formatters.getGeneroName(book.generoId, generos);
+    const generoId = book.genero_id !== undefined ? book.genero_id : book.generoId;
+    const generoName = formatters.getGeneroName ? formatters.getGeneroName(generoId, generos) : 'Sin clasificar';
     genreBadge.className = 'badge';
-    // Si no tiene género asignado, aplicar clase distintiva suave
-    if (generoNombre === 'Sin clasificar') {
+    if (generoName === 'Sin clasificar') {
       genreBadge.classList.add('badge-navy');
     }
-    genreBadge.textContent = generoNombre;
-    badgesContainer.appendChild(genreBadge);
-    header.appendChild(badgesContainer);
+    genreBadge.textContent = generoName;
+    badges.appendChild(genreBadge);
+    header.appendChild(badges);
 
     const title = document.createElement('h3');
     title.className = 'book-card-title';
@@ -50,35 +231,22 @@
     header.appendChild(title);
     card.appendChild(header);
 
-    // --- Cuerpo de la tarjeta (Metadatos) ---
     const body = document.createElement('div');
     body.className = 'book-card-body';
 
     // Editorial
-    const editorialItem = document.createElement('div');
-    editorialItem.className = 'book-meta-item';
-    const editorialLabel = document.createElement('span');
-    editorialLabel.className = 'book-meta-label';
-    editorialLabel.textContent = 'Editorial:';
-    const editorialValue = document.createElement('span');
-    editorialValue.className = 'book-meta-value';
-    editorialValue.textContent = formatters.getEditorialName(book.editorialId, editoriales);
-    editorialItem.appendChild(editorialLabel);
-    editorialItem.appendChild(editorialValue);
-    body.appendChild(editorialItem);
-
-    // Autores
-    const authorsItem = document.createElement('div');
-    authorsItem.className = 'book-meta-item';
-    const authorsLabel = document.createElement('span');
-    authorsLabel.className = 'book-meta-label';
-    authorsLabel.textContent = 'Autor(es):';
-    const authorsValue = document.createElement('span');
-    authorsValue.className = 'book-meta-value';
-    authorsValue.textContent = formatters.formatAuthors(book.autorIds, autores);
-    authorsItem.appendChild(authorsLabel);
-    authorsItem.appendChild(authorsValue);
-    body.appendChild(authorsItem);
+    const edItem = document.createElement('div');
+    edItem.className = 'book-meta-item';
+    const edLabel = document.createElement('span');
+    edLabel.className = 'book-meta-label';
+    edLabel.textContent = 'Editorial:';
+    const edVal = document.createElement('span');
+    edVal.className = 'book-meta-value';
+    const editorialId = book.editorial_id !== undefined ? book.editorial_id : book.editorialId;
+    edVal.textContent = formatters.getEditorialName ? formatters.getEditorialName(editorialId, editoriales) : 'Editorial';
+    edItem.appendChild(edLabel);
+    edItem.appendChild(edVal);
+    body.appendChild(edItem);
 
     // ISBN
     const isbnItem = document.createElement('div');
@@ -86,175 +254,243 @@
     const isbnLabel = document.createElement('span');
     isbnLabel.className = 'book-meta-label';
     isbnLabel.textContent = 'ISBN:';
-    const isbnValue = document.createElement('span');
-    isbnValue.className = 'book-meta-isbn';
-    isbnValue.textContent = book.isbn || '-';
+    const isbnVal = document.createElement('span');
+    isbnVal.className = 'book-meta-value';
+    isbnVal.textContent = book.isbn || 'N/D';
     isbnItem.appendChild(isbnLabel);
-    isbnItem.appendChild(isbnValue);
+    isbnItem.appendChild(isbnVal);
     body.appendChild(isbnItem);
+
+    // Stock
+    const stockItem = document.createElement('div');
+    stockItem.className = 'book-meta-item';
+    const stockLabel = document.createElement('span');
+    stockLabel.className = 'book-meta-label';
+    stockLabel.textContent = 'Stock:';
+    const stockVal = document.createElement('span');
+    stockVal.className = 'book-meta-value';
+    stockVal.textContent = `${book.stock !== undefined ? book.stock : 0} u.`;
+    stockItem.appendChild(stockLabel);
+    stockItem.appendChild(stockVal);
+    body.appendChild(stockItem);
 
     card.appendChild(body);
 
-    // --- Pie de tarjeta (Precio) ---
+    // Footer con precio y botón de ver autores
     const footer = document.createElement('footer');
     footer.className = 'book-card-footer';
+    footer.style.display = 'flex';
+    footer.style.justifyContent = 'space-between';
+    footer.style.alignItems = 'center';
+    footer.style.marginTop = '1rem';
+    footer.style.paddingTop = '0.75rem';
+    footer.style.borderTop = '1px solid var(--border-color)';
 
-    const priceTag = document.createElement('div');
-    priceTag.className = 'book-price-tag';
+    const price = document.createElement('span');
+    price.className = 'book-price';
+    price.style.fontSize = '1.2rem';
+    price.style.fontWeight = '700';
+    price.style.color = 'var(--accent-navy)';
+    const formatCurrency = formatters.formatCurrency || ((v) => `$${Number(v).toFixed(2)}`);
+    price.textContent = formatCurrency(book.precio);
+    footer.appendChild(price);
 
-    const priceLabel = document.createElement('span');
-    priceLabel.className = 'book-price-label';
-    priceLabel.textContent = 'Precio';
-
-    const priceValue = document.createElement('span');
-    priceValue.className = 'book-price-value';
-    priceValue.textContent = formatters.formatCurrency(book.precio);
-
-    priceTag.appendChild(priceLabel);
-    priceTag.appendChild(priceValue);
-    footer.appendChild(priceTag);
+    const detailBtn = document.createElement('button');
+    detailBtn.type = 'button';
+    detailBtn.className = 'btn btn-secondary btn-pagination';
+    detailBtn.textContent = 'Ver Autores';
+    detailBtn.setAttribute('aria-label', `Ver autores y detalle de ${book.titulo}`);
+    detailBtn.addEventListener('click', () => {
+      showBookDetail(book.id);
+    });
+    footer.appendChild(detailBtn);
 
     card.appendChild(footer);
-
     return card;
   }
 
   /**
-   * Crea el componente seguro de estado sin resultados
-   * @returns {HTMLElement} Elemento div .no-results-card
+   * Carga el catálogo desde la API mediante GET /api/libros/
+   * @param {Object} [options]
+   * @param {boolean} [options.resetOffset=false]
    */
-  function createNoResultsElement() {
-    const container = document.createElement('div');
-    container.className = 'no-results-card';
-    container.setAttribute('role', 'status');
+  async function loadCatalog({ resetOffset = false } = {}) {
+    if (isLoading) return;
+    isLoading = true;
 
-    const icon = document.createElement('div');
-    icon.className = 'no-results-icon';
-    icon.setAttribute('aria-hidden', 'true');
-    icon.textContent = '📖';
-    container.appendChild(icon);
-
-    const message = document.createElement('p');
-    message.className = 'no-results-message';
-    // RN-CAT-05: Mensaje claro y visible indicando la ausencia de resultados
-    message.textContent = 'No se encontraron libros que coincidan con la búsqueda';
-    container.appendChild(message);
-
-    const hint = document.createElement('p');
-    hint.className = 'no-results-hint';
-    hint.textContent = 'Probá modificando los términos de búsqueda o ingresando una palabra clave diferente.';
-    container.appendChild(hint);
-
-    return container;
-  }
-
-  /**
-   * Renderiza la colección de libros en la grilla del catálogo
-   * @param {Array|null} books - Lista de libros a exhibir (o null para leer el estado completo)
-   */
-  function render(books = null) {
-    const grid = document.getElementById('catalogo-grid');
-    const statusRegion = document.getElementById('catalogo-search-status');
-    if (!grid) return;
-
-    const state = root.LibreriaApp.state;
-    const formatters = root.LibreriaApp.formatters;
-    const booksToRender = Array.isArray(books) ? books : (state ? state.getBooks() : []);
-
-    // Limpieza segura del contenedor sin usar innerHTML
-    while (grid.firstChild) {
-      grid.removeChild(grid.firstChild);
+    if (resetOffset) {
+      currentOffset = 0;
     }
 
-    if (booksToRender.length === 0) {
-      grid.appendChild(createNoResultsElement());
-      if (statusRegion) {
-        statusRegion.textContent = 'No se encontraron libros que coincidan con la búsqueda.';
+    renderState('loading');
+
+    const app = root.LibreriaApp;
+    const api = app.api;
+    const formatters = app.formatters || {};
+    const state = app.state || {};
+
+    try {
+      // Asegurar que editoriales y géneros estén cargados en state para traducir nombres
+      let editoriales = state.getEditoriales ? state.getEditoriales() : [];
+      let generos = state.getGeneros ? state.getGeneros() : [];
+
+      if (editoriales.length === 0 || generos.length === 0) {
+        try {
+          const [eds, gens] = await Promise.all([api.getEditoriales(), api.getGeneros()]);
+          if (state.setEditoriales) state.setEditoriales(eds);
+          if (state.setGeneros) state.setGeneros(gens);
+          editoriales = eds;
+          generos = gens;
+        } catch (e) {
+          console.warn('[Catalogo] No se pudieron precargar editoriales/géneros:', e);
+        }
       }
-      return;
-    }
 
-    const helpers = {
-      formatters,
-      editoriales: state ? state.getEditorials() : [],
-      generos: state ? state.getGenres() : [],
-      autores: state ? state.getAuthors() : []
-    };
+      // Consulta de libros paginada y filtrada por título
+      const books = await api.getLibros({
+        titulo: currentQuery,
+        limit: PAGE_LIMIT,
+        offset: currentOffset
+      });
 
-    const fragment = document.createDocumentFragment();
-    booksToRender.forEach((book) => {
-      fragment.appendChild(createBookCardElement(book, helpers));
-    });
+      lastLoadedBooks = Array.isArray(books) ? books : [];
 
-    grid.appendChild(fragment);
+      const grid = document.getElementById('catalogo-grid');
+      const pagination = document.getElementById('catalogo-pagination');
+      const pageInfo = document.getElementById('catalogo-pagination-info');
+      const prevBtn = document.getElementById('btn-catalogo-prev');
+      const nextBtn = document.getElementById('btn-catalogo-next');
+      const searchStatus = document.getElementById('catalogo-search-status');
 
-    if (statusRegion) {
-      statusRegion.textContent = `Mostrando ${booksToRender.length} libros en el catálogo.`;
+      if (lastLoadedBooks.length === 0) {
+        if (currentOffset === 0 && !currentQuery.trim()) {
+          // Estado 2: Lista vacía en base de datos
+          renderState('empty');
+        } else if (currentQuery.trim()) {
+          // Estado 3: Búsqueda sin coincidencias
+          renderState('no-results');
+        } else {
+          // Fin de la paginación
+          renderState('none');
+          if (grid) grid.innerHTML = '<p class="text-muted" style="grid-column: 1/-1; text-align: center;">No hay más libros para mostrar en esta página.</p>';
+        }
+
+        if (pagination) {
+          pagination.hidden = currentOffset === 0 && !currentQuery;
+          if (prevBtn) prevBtn.disabled = currentOffset === 0;
+          if (nextBtn) nextBtn.disabled = true;
+          if (pageInfo) {
+            const pageNum = Math.floor(currentOffset / PAGE_LIMIT) + 1;
+            pageInfo.textContent = `Página ${pageNum}`;
+          }
+        }
+        return;
+      }
+
+      // Renderizado normal
+      renderState('none');
+      if (grid) {
+        grid.innerHTML = '';
+        const fragment = document.createDocumentFragment();
+        lastLoadedBooks.forEach((book) => {
+          fragment.appendChild(createBookCard(book, { formatters, editoriales, generos }));
+        });
+        grid.appendChild(fragment);
+      }
+
+      // Actualizar paginador
+      if (pagination) {
+        pagination.hidden = false;
+        const pageNum = Math.floor(currentOffset / PAGE_LIMIT) + 1;
+        if (pageInfo) {
+          pageInfo.textContent = `Página ${pageNum} (mostrando ${lastLoadedBooks.length} ejemplares)`;
+        }
+        if (prevBtn) {
+          prevBtn.disabled = currentOffset === 0;
+        }
+        if (nextBtn) {
+          // Si devolvió menos del limit, no hay página siguiente
+          nextBtn.disabled = lastLoadedBooks.length < PAGE_LIMIT;
+        }
+      }
+
+      if (searchStatus) {
+        searchStatus.textContent = `Mostrando ${lastLoadedBooks.length} libros.`;
+      }
+    } catch (err) {
+      console.error('[Catalogo] Error al consultar API:', err);
+      // Estado 4: Error de conexión
+      renderState('error', err.message);
+    } finally {
+      isLoading = false;
     }
   }
 
   /**
-   * Filtra los libros según el término ingresado en la barra de búsqueda
-   * Implementa RN-CAT-01 (toLowerCase), RN-CAT-02 (coincidencia parcial) y RN-CAT-03 (trim)
-   * @param {string} query - Texto de búsqueda ingresado por el usuario
+   * Manejador de búsqueda reactiva por título
+   * @param {string} query
    */
-  function filterByTitle(query) {
-    const state = root.LibreriaApp.state;
-    if (!state) return;
-
-    // RN-CAT-03: Limpieza de espacios en blanco sobrantes
-    const cleanQuery = typeof query === 'string' ? query.trim() : '';
-
-    // RN-CAT-04: Búsqueda vacía devuelve la totalidad de los libros
-    if (!cleanQuery) {
-      render(state.getBooks());
-      return;
-    }
-
-    // RN-CAT-01 y RN-CAT-02: Comparación insensible a mayúsculas/minúsculas y por subcadena
-    const lowerQuery = cleanQuery.toLowerCase();
-    const allBooks = state.getBooks();
-
-    const filtered = allBooks.filter((book) => {
-      const title = (book.titulo || '').toLowerCase();
-      return title.includes(lowerQuery);
-    });
-
-    render(filtered);
+  let searchDebounceTimeout = null;
+  function handleSearch(query) {
+    clearTimeout(searchDebounceTimeout);
+    searchDebounceTimeout = setTimeout(() => {
+      currentQuery = (query || '').trim();
+      // Reiniciar desplazamiento al cambiar el filtro (exigido por consigna)
+      loadCatalog({ resetOffset: true });
+    }, 250);
   }
 
   /**
-   * Inicializa la vista de catálogo y vincula los eventos
+   * Inicializa la vista de catálogo
    */
   function init() {
     const searchInput = document.getElementById('catalogo-search');
     if (searchInput) {
-      // Evento input para respuesta dinámica en tiempo real
       searchInput.addEventListener('input', (e) => {
-        filterByTitle(e.target.value);
+        handleSearch(e.target.value);
       });
     }
 
-    // Suscripción reactiva ante cambios en el estado
-    if (root.LibreriaApp.state && typeof root.LibreriaApp.state.subscribe === 'function') {
-      root.LibreriaApp.state.subscribe((event) => {
-        if (event === 'init' || event === 'book:added' || event === 'libros:updated') {
-          // Re-renderizar preservando el filtro activo si existiera
-          const currentQuery = searchInput ? searchInput.value : '';
-          filterByTitle(currentQuery);
+    const prevBtn = document.getElementById('btn-catalogo-prev');
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        if (currentOffset >= PAGE_LIMIT) {
+          currentOffset -= PAGE_LIMIT;
+          loadCatalog({ resetOffset: false });
         }
       });
     }
 
-    // Render inicial
-    render();
+    const nextBtn = document.getElementById('btn-catalogo-next');
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        currentOffset += PAGE_LIMIT;
+        loadCatalog({ resetOffset: false });
+      });
+    }
+
+    // Modal close listeners
+    const modal = document.getElementById('modal-libro-detalle');
+    const closeBtn = document.getElementById('btn-cerrar-modal-libro');
+    const okBtn = document.getElementById('btn-modal-libro-ok');
+    const closeModal = () => {
+      if (!modal) return;
+      if (typeof modal.close === 'function') modal.close();
+      else modal.removeAttribute('open');
+    };
+    if (closeBtn) closeBtn.addEventListener('click', closeModal);
+    if (okBtn) okBtn.addEventListener('click', closeModal);
+
+    // Carga inicial
+    loadCatalog({ resetOffset: true });
   }
 
   const catalogoView = {
     init,
-    render,
-    filterByTitle,
-    createBookCardElement
+    loadCatalog,
+    onActivate() {
+      loadCatalog({ resetOffset: false });
+    }
   };
 
   root.LibreriaApp.views.catalogo = catalogoView;

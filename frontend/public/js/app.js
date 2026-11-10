@@ -1,70 +1,31 @@
 /**
  * ============================================================================
- * App - Inicializador Central de la SPA Librería Central
- * Orquestación de módulos, ciclo de vida de persistencia y enrutador
+ * App - Inicializador Central de la SPA Librería Central (Evaluación Global)
+ * Orquestación de módulos, cliente API y enrutador por hash
  * ============================================================================
  */
 
 (function () {
   'use strict';
 
-  // Espacio de nombres global
   const root = typeof window !== 'undefined' ? window : (typeof globalThis !== 'undefined' ? globalThis : this);
   window.LibreriaApp = window.LibreriaApp || {};
   root.LibreriaApp = window.LibreriaApp;
 
-  // Bandera para asegurar que los listeners de sincronización se registren una sola vez
-  let _storageSyncAttached = false;
-
-  /**
-   * Vincula los eventos de mutación de estado con la persistencia inmediata en storage (RN-PER-03)
-   * @param {Object} app - Referencia al namespace LibreriaApp
-   */
-  function setupStorageSync(app) {
-    if (_storageSyncAttached || !app.state || !app.storage) return;
-    _storageSyncAttached = true;
-
-    app.state.on('libros:updated', () => {
-      app.storage.saveBooks(app.state.getBooks());
-    });
-
-    app.state.on('clientes:updated', () => {
-      app.storage.saveClients(app.state.getClients());
-    });
-
-    app.state.on('ventas:updated', () => {
-      app.storage.saveSales(app.state.getSales());
-    });
-  }
-
   /**
    * Inicializa los subsistemas de la SPA cuando el DOM está completamente cargado
    */
-  function initApp() {
+  async function initApp() {
     const app = root.LibreriaApp;
 
-    // 1. Inicializar el almacén central de estado y ciclo de vida de persistencia (RN-PER-01, RN-PER-02)
-    if (app.state) {
-      if (app.storage && app.storage.isInitialized()) {
-        // Sesión subsiguiente: hidratar el estado directamente desde localStorage sin duplicar semilla
-        const persistedData = app.storage.getAllData();
-        app.state.init(persistedData);
-        console.info(`[LibreriaApp] Estado restaurado desde localStorage: ${app.state.getBooks().length} libros, ${app.state.getClients().length} clientes, ${app.state.getSales().length} ventas.`);
-      } else if (app.seedData) {
-        // Primer inicio: almacenar la semilla inicial completa y activar la bandera
-        if (app.storage) {
-          app.storage.saveInitialSeed(app.seedData);
-        }
-        app.state.init(app.seedData);
-        console.info(`[LibreriaApp] Estado inicializado con semilla inicial: ${app.state.getBooks().length} libros, ${app.state.getClients().length} clientes.`);
-      } else {
-        console.warn('[LibreriaApp] Advertencia: seedData o storage no se encuentran disponibles.');
+    // 1. Verificación inicial de salud de la API
+    if (app.api && typeof app.api.checkHealth === 'function') {
+      try {
+        const health = await app.api.checkHealth();
+        console.info('[LibreriaApp] Conexión establecida con la API FastAPI (/api/health/ready):', health);
+      } catch (err) {
+        console.warn('[LibreriaApp] Advertencia: la API no responde en /api/health/ready:', err.message);
       }
-
-      // Configurar sincronización reactiva hacia localStorage (RN-PER-03)
-      setupStorageSync(app);
-    } else {
-      console.warn('[LibreriaApp] Advertencia: state o seedData no se encuentran disponibles.');
     }
 
     // 2. Inicializar las vistas disponibles
@@ -94,7 +55,7 @@
       return;
     }
 
-    console.info('[LibreriaApp] SPA Shell, Catálogo, Libros, Clientes, Ventas, Historial y Storage inicializados correctamente (v1.4.0).');
+    console.info('[LibreriaApp] SPA Librería Central (Evaluación Global) inicializada con éxito.');
   }
 
   // Esperar a que el DOM esté disponible para iniciar
@@ -102,15 +63,9 @@
     if (document.readyState === 'loading') {
       document.addEventListener('DOMContentLoaded', initApp);
     } else {
-      // Si el DOM ya cargó previamente (ej. script diferido ejecutado tras parseo)
       initApp();
     }
   }
 
-  // Exposición de la función de arranque
   root.LibreriaApp.init = initApp;
-
-  if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { initApp };
-  }
 })();

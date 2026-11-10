@@ -1,9 +1,10 @@
 /**
  * ============================================================================
- * Clientes View - Formulario de Alta y Nómina de Clientes (C-03)
+ * Clientes View - Formulario de Alta y Consulta Individual (Ejercicio 2)
  * ============================================================================
- * Maneja la interacción del formulario de clientes, validación de nombre y email único,
- * renderizado reactivo de la tabla de clientes y prevención de recarga (RN-CLI-01 a RN-CLI-04).
+ * Maneja la interacción del formulario de clientes, validación de nombre y email,
+ * alta mediante POST /clientes/ (201), manejo de error 409 (email duplicado) o 422,
+ * y consulta individual por ID mediante GET /clientes/{id}.
  */
 
 (function () {
@@ -14,19 +15,12 @@
   root.LibreriaApp.views = root.LibreriaApp.views || {};
 
   /**
-   * Muestra un mensaje en el contenedor de feedback del formulario
-   * @param {string} message - Texto del mensaje
-   * @param {'success'|'error'} type - Tipo de mensaje
+   * Muestra mensaje en el contenedor de feedback del formulario
    */
   function setFeedback(message, type) {
-    if (typeof document === 'undefined') return;
     const container = document.getElementById('cliente-feedback');
     if (!container) return;
-
-    while (container.firstChild) {
-      container.removeChild(container.firstChild);
-    }
-
+    container.innerHTML = '';
     if (!message) return;
 
     const alertDiv = document.createElement('div');
@@ -35,25 +29,14 @@
     container.appendChild(alertDiv);
   }
 
-  /**
-   * Muestra u oculta el mensaje de error de un campo específico
-   * @param {string} errorElementId - ID del elemento de error
-   * @param {string} inputId - ID del campo de entrada
-   * @param {string|null} message - Mensaje de error
-   */
   function setFieldError(errorElementId, inputId, message) {
-    if (typeof document === 'undefined') return;
     const errorEl = document.getElementById(errorElementId);
     const inputEl = inputId ? document.getElementById(inputId) : null;
 
     if (errorEl) {
-      if (message) {
-        errorEl.textContent = message;
-        errorEl.classList.add('active');
-      } else {
-        errorEl.textContent = '';
-        errorEl.classList.remove('active');
-      }
+      errorEl.textContent = message || '';
+      if (message) errorEl.classList.add('active');
+      else errorEl.classList.remove('active');
     }
 
     if (inputEl) {
@@ -67,184 +50,174 @@
     }
   }
 
-  /**
-   * Limpia todos los errores visibles del formulario de clientes
-   */
-  function clearFieldErrors() {
+  function clearAllErrors() {
     setFieldError('error-cliente-nombre', 'cliente-nombre', null);
     setFieldError('error-cliente-email', 'cliente-email', null);
+    setFeedback('', 'success');
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
   /**
-   * Renderiza la nómina de clientes en la tabla del DOM de forma segura (sin innerHTML)
-   * @param {Array} [clientsList] - Lista de clientes a mostrar (opcional, consulta state por defecto)
+   * Carga y renderiza la lista de clientes desde la API mediante GET /clientes/
    */
-  function renderTable(clientsList) {
-    if (typeof document === 'undefined') return;
-
-    const state = root.LibreriaApp.state;
-    const clients = clientsList || (state && typeof state.getClientes === 'function' ? state.getClientes() : (state ? state.getClients() : []));
+  async function loadClientsTable() {
     const tbody = document.getElementById('clientes-table-body');
     if (!tbody) return;
 
-    while (tbody.firstChild) {
-      tbody.removeChild(tbody.firstChild);
-    }
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;">Cargando clientes desde la API...</td></tr>';
 
-    if (!Array.isArray(clients) || clients.length === 0) {
-      const emptyRow = document.createElement('tr');
-      const emptyCell = document.createElement('td');
-      emptyCell.colSpan = 3;
-      emptyCell.textContent = 'No hay clientes registrados en el sistema.';
-      emptyCell.style.textAlign = 'center';
-      emptyCell.style.color = 'var(--text-muted)';
-      emptyRow.appendChild(emptyCell);
-      tbody.appendChild(emptyRow);
+    try {
+      const clients = await root.LibreriaApp.api.getClientes({ limit: 100, offset: 0 });
+      if (root.LibreriaApp.state && root.LibreriaApp.state.setClientes) {
+        root.LibreriaApp.state.setClientes(clients);
+      }
+
+      if (!Array.isArray(clients) || clients.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="3" style="text-align: center;" class="text-muted">No hay clientes registrados en la base de datos.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = '';
+      clients.forEach((client) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${client.id}</strong></td>
+          <td>${escapeHtml(client.nombre)}</td>
+          <td><code>${escapeHtml(client.email)}</code></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (err) {
+      console.error('[ClientesView] Error cargando tabla de clientes:', err);
+      tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: var(--color-error);">Error al consultar clientes: ${escapeHtml(err.message)}</td></tr>`;
+    }
+  }
+
+  /**
+   * Consulta individual por ID (GET /clientes/{id}) exigida por consigna
+   */
+  async function searchClientById() {
+    const idInput = document.getElementById('cliente-buscar-id');
+    const resultDiv = document.getElementById('cliente-consulta-resultado');
+    if (!idInput || !resultDiv) return;
+
+    const clienteId = parseInt(idInput.value, 10);
+    if (isNaN(clienteId) || clienteId <= 0) {
+      resultDiv.style.display = 'block';
+      resultDiv.innerHTML = '<span style="color: var(--color-error);">Ingrese un ID numérico de cliente válido (>= 1).</span>';
       return;
     }
 
-    clients.forEach((client) => {
-      const tr = document.createElement('tr');
+    resultDiv.style.display = 'block';
+    resultDiv.innerHTML = `Consultando <code>GET /clientes/${clienteId}</code>...`;
 
-      const tdId = document.createElement('td');
-      tdId.textContent = client.id;
-      tdId.style.fontFamily = 'monospace';
-
-      const tdNombre = document.createElement('td');
-      tdNombre.textContent = client.nombreCompleto;
-      tdNombre.style.fontWeight = '500';
-
-      const tdEmail = document.createElement('td');
-      tdEmail.textContent = client.email;
-
-      tr.appendChild(tdId);
-      tr.appendChild(tdNombre);
-      tr.appendChild(tdEmail);
-      tbody.appendChild(tr);
-    });
+    try {
+      const client = await root.LibreriaApp.api.getCliente(clienteId);
+      resultDiv.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <strong>ID ${client.id}:</strong> ${escapeHtml(client.nombre)} &lt;<code>${escapeHtml(client.email)}</code>&gt;
+          </div>
+          <span class="badge" style="background-color: #dcfce7; color: #166534;">Encontrado en API</span>
+        </div>
+      `;
+    } catch (err) {
+      resultDiv.innerHTML = `<span style="color: var(--color-error);">✗ Error: ${escapeHtml(err.message)}</span>`;
+    }
   }
 
   /**
-   * Procesa el envío del formulario de clientes
-   * @param {Event} [e] - Evento submit
-   * @returns {{ success: boolean, error?: string, client?: Object }}
+   * Procesa el formulario de alta de cliente mediante POST /clientes/
    */
-  function handleFormSubmit(e) {
-    if (e && typeof e.preventDefault === 'function') {
-      e.preventDefault();
-    }
-
-    setFeedback('', 'success');
-    clearFieldErrors();
-
-    if (typeof document === 'undefined') {
-      return { success: false, error: 'DOM no disponible' };
-    }
-
-    const state = root.LibreriaApp.state;
-    const validators = root.LibreriaApp.validators;
-    if (!state || !validators) {
-      return { success: false, error: 'Módulos no disponibles' };
-    }
+  async function handleSubmit(e) {
+    e.preventDefault();
+    clearAllErrors();
 
     const nombreInput = document.getElementById('cliente-nombre');
     const emailInput = document.getElementById('cliente-email');
+    const submitBtn = document.getElementById('btn-submit-cliente');
 
-    const nombre = nombreInput ? nombreInput.value : '';
-    const email = emailInput ? emailInput.value : '';
-
-    const existingClients = typeof state.getClientes === 'function' ? state.getClientes() : state.getClients();
-
-    const nameCheck = validators.validateRequired(nombre, 'El nombre completo');
-    const emailCheck = validators.validateEmail(email, existingClients);
+    const nombre = nombreInput ? nombreInput.value.trim() : '';
+    const email = emailInput ? emailInput.value.trim() : '';
 
     let hasErrors = false;
-    let firstInvalidInput = null;
-
-    if (!nameCheck.valid) {
+    if (!nombre) {
+      setFieldError('error-cliente-nombre', 'cliente-nombre', 'El nombre completo es obligatorio.');
       hasErrors = true;
-      setFieldError('error-cliente-nombre', 'cliente-nombre', nameCheck.error);
-      if (!firstInvalidInput) firstInvalidInput = nombreInput;
+    }
+    if (!email) {
+      setFieldError('error-cliente-email', 'cliente-email', 'El correo electrónico es obligatorio.');
+      hasErrors = true;
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setFieldError('error-cliente-email', 'cliente-email', 'Formato de correo electrónico inválido.');
+      hasErrors = true;
     }
 
-    if (!emailCheck.valid) {
-      hasErrors = true;
-      setFieldError('error-cliente-email', 'cliente-email', emailCheck.error);
-      if (!firstInvalidInput) firstInvalidInput = emailInput;
+    if (hasErrors) return;
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Registrando en API...';
     }
 
-    if (hasErrors) {
-      setFeedback('Por favor revise los errores señalados en el formulario.', 'error');
-      if (firstInvalidInput && typeof firstInvalidInput.focus === 'function') {
-        firstInvalidInput.focus();
+    try {
+      const createdClient = await root.LibreriaApp.api.createCliente({ nombre, email });
+
+      setFeedback(`¡Cliente "${createdClient.nombre}" registrado con éxito con ID ${createdClient.id}!`, 'success');
+
+      const form = document.getElementById('form-cliente');
+      if (form) form.reset();
+
+      // Recargar tabla de clientes
+      await loadClientsTable();
+
+      // Si la vista de ventas está inicializada, refrescar su selector de clientes
+      if (root.LibreriaApp.views.ventas && typeof root.LibreriaApp.views.ventas.loadClientOptions === 'function') {
+        root.LibreriaApp.views.ventas.loadClientOptions();
       }
-      return { success: false, error: 'Validación fallida' };
+    } catch (err) {
+      console.error('[ClientesView] Error al registrar cliente:', err);
+      // Mensaje de error 409 (email duplicado) o 422
+      setFeedback(`Error del servidor (${err.status || 'Red'}): ${err.message}`, 'error');
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Registrar Cliente';
+      }
     }
-
-    // Construcción de la nueva entidad Cliente
-    const newClient = {
-      id: `cli-${Date.now()}`,
-      nombreCompleto: nameCheck.sanitizedValue,
-      email: emailCheck.sanitizedValue
-    };
-
-    const added = typeof state.addCliente === 'function' ? state.addCliente(newClient) : state.addClient(newClient);
-    if (!added) {
-      setFeedback('Error inesperado al registrar el cliente en el estado.', 'error');
-      return { success: false, error: 'No se pudo guardar el cliente' };
-    }
-
-    // Limpieza de formulario y feedback de éxito
-    const form = document.getElementById('form-cliente');
-    if (form) {
-      form.reset();
-    }
-    clearFieldErrors();
-    setFeedback(`¡El cliente "${newClient.nombreCompleto}" fue registrado exitosamente!`, 'success');
-
-    return { success: true, client: newClient };
   }
 
-  /**
-   * Inicializa la vista de clientes
-   */
   function init() {
-    if (typeof document === 'undefined') return;
-
-    renderTable();
-
-    // Suscripción reactiva para refresco de tabla ante nuevos clientes (RN-CLI-04)
-    const state = root.LibreriaApp.state;
-    if (state && typeof state.subscribe === 'function') {
-      state.subscribe((event) => {
-        if (event === 'init' || event === 'client:added' || event === 'clientes:updated') {
-          renderTable();
-        }
-      });
-    }
-
     const form = document.getElementById('form-cliente');
     if (form) {
-      form.addEventListener('submit', handleFormSubmit);
-      form.addEventListener('reset', () => {
-        setTimeout(clearFieldErrors, 0);
-      });
+      form.addEventListener('submit', handleSubmit);
+      form.addEventListener('reset', clearAllErrors);
     }
 
-    const btnReset = document.getElementById('btn-reset-cliente');
-    if (btnReset) {
-      btnReset.addEventListener('click', () => {
-        setFeedback('', 'success');
-      });
+    const searchBtn = document.getElementById('btn-buscar-cliente-id');
+    if (searchBtn) {
+      searchBtn.addEventListener('click', searchClientById);
     }
+
+    const refreshBtn = document.getElementById('btn-refresh-clientes');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', loadClientsTable);
+    }
+
+    loadClientsTable();
   }
 
   const clientesView = {
     init,
-    renderTable,
-    handleFormSubmit,
-    setFeedback,
-    clearFieldErrors
+    loadClientsTable,
+    searchClientById,
+    onActivate() {
+      loadClientsTable();
+    }
   };
 
   root.LibreriaApp.views.clientes = clientesView;

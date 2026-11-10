@@ -58,6 +58,13 @@
     // ------------------------------------------------------------------------
     // Libros
     // ------------------------------------------------------------------------
+    setBooks(books) {
+      _state.libros = Array.isArray(books) ? books.map((b) => ({ ...b })) : [];
+      notify('libros:updated', { libros: this.getBooks() });
+    },
+    setLibros(libros) {
+      this.setBooks(libros);
+    },
     getBooks() {
       return _state.libros.map((b) => ({ ...b }));
     },
@@ -102,6 +109,10 @@
     // ------------------------------------------------------------------------
     // Editoriales (Entidad de referencia fija)
     // ------------------------------------------------------------------------
+    setEditoriales(editoriales) {
+      _state.editoriales = Array.isArray(editoriales) ? editoriales.map((e) => ({ ...e })) : [];
+      notify('editoriales:updated', { editoriales: this.getEditoriales() });
+    },
     getEditorials() {
       return _state.editoriales.map((e) => ({ ...e }));
     },
@@ -116,6 +127,10 @@
     // ------------------------------------------------------------------------
     // Géneros (Entidad de referencia fija)
     // ------------------------------------------------------------------------
+    setGeneros(generos) {
+      _state.generos = Array.isArray(generos) ? generos.map((g) => ({ ...g })) : [];
+      notify('generos:updated', { generos: this.getGeneros() });
+    },
     getGenres() {
       return _state.generos.map((g) => ({ ...g }));
     },
@@ -130,6 +145,10 @@
     // ------------------------------------------------------------------------
     // Autores (Entidad de referencia fija)
     // ------------------------------------------------------------------------
+    setAutores(autores) {
+      _state.autores = Array.isArray(autores) ? autores.map((a) => ({ ...a })) : [];
+      notify('autores:updated', { autores: this.getAutores() });
+    },
     getAuthors() {
       return _state.autores.map((a) => ({ ...a }));
     },
@@ -144,6 +163,10 @@
     // ------------------------------------------------------------------------
     // Clientes
     // ------------------------------------------------------------------------
+    setClientes(clientes) {
+      _state.clientes = Array.isArray(clientes) ? clientes.map((c) => ({ ...c })) : [];
+      notify('clientes:updated', { clientes: this.getClientes() });
+    },
     getClients() {
       return _state.clientes.map((c) => ({ ...c }));
     },

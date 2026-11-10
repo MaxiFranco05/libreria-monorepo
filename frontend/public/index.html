@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -11,8 +11,7 @@
   <link rel="stylesheet" href="css/views.css">
   <script defer src="js/utils/formatters.js"></script>
   <script defer src="js/utils/validators.js"></script>
-  <script defer src="js/seed.js"></script>
-  <script defer src="js/storage.js"></script>
+  <script defer src="js/api.js"></script>
   <script defer src="js/state.js"></script>
   <script defer src="js/views/catalogo.view.js"></script>
   <script defer src="js/views/libros.view.js"></script>
@@ -31,7 +30,7 @@
     <div class="header-container">
       <div class="brand">
         <h1 class="brand-title">Librería Central</h1>
-        <p class="brand-subtitle">Gestión de Catálogo y Ventas</p>
+        <p class="brand-subtitle">Gestión de Catálogo y Ventas — Evaluación Global</p>
       </div>
       <nav class="app-nav" aria-label="Navegación principal">
         <ul class="nav-list">
@@ -59,11 +58,11 @@
   <main id="main-content" class="main-content" tabindex="-1">
     <div class="content-container">
       
-      <!-- Vista 1: Catálogo -->
+      <!-- Vista 1: Catálogo (Ejercicio 1) -->
       <section id="catalogo" class="view-section active" aria-labelledby="title-catalogo">
         <header class="view-header">
           <h2 id="title-catalogo" class="view-title" tabindex="-1">Catálogo de Libros</h2>
-          <p class="view-description">Exploración y búsqueda de ejemplares disponibles en el fondo editorial.</p>
+          <p class="view-description">Exploración y búsqueda de ejemplares disponibles en el catálogo mediante la API.</p>
         </header>
         <div class="view-content" id="catalogo-content">
           <div class="catalogo-toolbar">
@@ -73,21 +72,37 @@
             </div>
             <p class="visually-hidden" aria-live="polite" id="catalogo-search-status"></p>
           </div>
-          <div class="catalogo-grid" id="catalogo-grid">
-            <!-- Las tarjetas de libros se renderizan dinámicamente mediante catalogo.view.js -->
+
+          <!-- Contenedor de estados visuales (Carga, Vacía, Sin resultados, Error) -->
+          <div id="catalogo-state" aria-live="polite"></div>
+
+          <!-- Cuadrícula de libros -->
+          <div class="catalogo-grid" id="catalogo-grid"></div>
+
+          <!-- Paginación accesible -->
+          <div class="pagination-bar" id="catalogo-pagination" hidden>
+            <span class="pagination-info" id="catalogo-pagination-info">Mostrando página 1</span>
+            <div class="pagination-controls">
+              <button type="button" class="btn btn-secondary btn-pagination" id="btn-catalogo-prev" disabled>
+                &larr; Anterior
+              </button>
+              <button type="button" class="btn btn-secondary btn-pagination" id="btn-catalogo-next" disabled>
+                Siguiente &rarr;
+              </button>
+            </div>
           </div>
         </div>
       </section>
 
-      <!-- Vista 2: Libros -->
+      <!-- Vista 2: Libros (Ejercicio 2) -->
       <section id="libros" class="view-section" aria-labelledby="title-libros">
         <header class="view-header">
           <h2 id="title-libros" class="view-title" tabindex="-1">Administración de Libros</h2>
-          <p class="view-description">Formulario de alta e incorporación de nuevos títulos al catálogo.</p>
+          <p class="view-description">Alta e incorporación de nuevos títulos con autores y validación de stock y precios.</p>
         </header>
         <div class="view-content" id="libros-content">
           <div class="card form-card">
-            <h3 class="card-subtitle">Registrar Nuevo Libro</h3>
+            <h3 class="card-subtitle">Registrar Nuevo Libro (POST /libros/)</h3>
             <div id="libro-feedback" class="form-feedback" aria-live="polite"></div>
             <form id="form-libro" class="app-form" novalidate>
               <div class="form-group">
@@ -99,15 +114,21 @@
               <div class="form-row">
                 <div class="form-group form-col">
                   <label for="libro-isbn" class="form-label">ISBN <span class="required">*</span></label>
-                  <input type="text" id="libro-isbn" name="isbn" class="form-control" required placeholder="Ej. 978-950-04-2455-4" autocomplete="off">
-                  <small class="form-hint">Se normaliza quitando espacios y guiones.</small>
+                  <input type="text" id="libro-isbn" name="isbn" class="form-control" required placeholder="Ej. 9789500424554" autocomplete="off">
+                  <small class="form-hint">Debe ser único en la base de datos.</small>
                   <span class="field-error" id="error-libro-isbn" aria-live="polite"></span>
                 </div>
 
                 <div class="form-group form-col">
-                  <label for="libro-precio" class="form-label">Precio Unitario ($) <span class="required">*</span></label>
+                  <label for="libro-precio" class="form-label">Precio Positivo ($) <span class="required">*</span></label>
                   <input type="number" id="libro-precio" name="precio" class="form-control" required min="0.01" step="0.01" placeholder="Ej. 2500.00">
                   <span class="field-error" id="error-libro-precio" aria-live="polite"></span>
+                </div>
+
+                <div class="form-group form-col">
+                  <label for="libro-stock" class="form-label">Stock Entero <span class="required">*</span></label>
+                  <input type="number" id="libro-stock" name="stock" class="form-control" required min="0" step="1" value="10" placeholder="Ej. 10">
+                  <span class="field-error" id="error-libro-stock" aria-live="polite"></span>
                 </div>
               </div>
 
@@ -115,7 +136,7 @@
                 <div class="form-group form-col">
                   <label for="libro-editorial" class="form-label">Editorial <span class="required">*</span></label>
                   <select id="libro-editorial" name="editorialId" class="form-control" required>
-                    <option value="">-- Seleccione una editorial --</option>
+                    <option value="">-- Cargando editoriales... --</option>
                   </select>
                   <span class="field-error" id="error-libro-editorial" aria-live="polite"></span>
                 </div>
@@ -130,11 +151,48 @@
                 </div>
               </div>
 
+              <!-- Autorías (Ejercicio 2: autor_id, rol, orden y verificación con GET /autores/{id}) -->
               <div class="form-group">
                 <fieldset class="form-fieldset" id="fieldset-autores">
-                  <legend class="form-legend">Autores asociados <span class="required">*</span></legend>
-                  <div class="checkbox-group" id="libro-autores-group">
-                    <!-- Checkboxes poblados dinámicamente desde state.autores -->
+                  <legend class="form-legend">Autorías del Libro <span class="required">* (Mínimo un autor)</span></legend>
+                  
+                  <div class="subform-box">
+                    <div class="form-row" style="align-items: flex-end;">
+                      <div class="form-group form-col" style="flex: 2;">
+                        <label for="libro-autor-id-input" class="form-label">ID de Autor</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                          <input type="number" id="libro-autor-id-input" class="form-control" min="1" step="1" placeholder="Ej. 1">
+                          <button type="button" class="btn btn-secondary" id="btn-verificar-autor">Verificar ID</button>
+                        </div>
+                        <span id="libro-autor-verificado-info" style="font-size: 0.85rem; font-weight: 500; color: var(--accent-navy); margin-top: 0.25rem; display: block;"></span>
+                      </div>
+
+                      <div class="form-group form-col" style="flex: 1.5;">
+                        <label for="libro-autor-rol" class="form-label">Rol</label>
+                        <select id="libro-autor-rol" class="form-control">
+                          <option value="autor">Autor</option>
+                          <option value="coautor">Coautor</option>
+                          <option value="traductor">Traductor</option>
+                          <option value="ilustrador">Ilustrador</option>
+                        </select>
+                      </div>
+
+                      <div class="form-group form-col" style="flex: 1;">
+                        <label for="libro-autor-orden" class="form-label">Orden</label>
+                        <input type="number" id="libro-autor-orden" class="form-control" min="1" step="1" value="1">
+                      </div>
+
+                      <div class="form-group form-col" style="flex: 1.2;">
+                        <button type="button" class="btn btn-secondary btn-block" id="btn-agregar-autor-lista">
+                          + Agregar
+                        </button>
+                      </div>
+                    </div>
+
+                    <!-- Lista visual de autorías agregadas -->
+                    <div id="libro-autores-agregados" style="margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                      <span class="text-muted" style="font-size: 0.85rem; font-style: italic;">No hay autorías añadidas todavía.</span>
+                    </div>
                   </div>
                   <span class="field-error" id="error-libro-autores" aria-live="polite"></span>
                 </fieldset>
@@ -148,7 +206,10 @@
           </div>
 
           <div class="card table-card">
-            <h3 class="card-subtitle">Listado de Libros Registrados</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <h3 class="card-subtitle" style="margin-bottom: 0;">Nómina de Libros Registrados en la API</h3>
+              <button type="button" class="btn btn-secondary btn-pagination" id="btn-refresh-libros">Actualizar</button>
+            </div>
             <div class="table-responsive" id="libros-table-container">
               <table class="table" id="tabla-libros">
                 <thead>
@@ -158,34 +219,33 @@
                     <th scope="col">ISBN</th>
                     <th scope="col">Editorial</th>
                     <th scope="col">Género</th>
-                    <th scope="col">Autor(es)</th>
+                    <th scope="col">Stock</th>
                     <th scope="col">Precio</th>
+                    <th scope="col">Acción</th>
                   </tr>
                 </thead>
-                <tbody id="libros-table-body">
-                  <!-- Filas renderizadas dinámicamente por libros.view.js -->
-                </tbody>
+                <tbody id="libros-table-body"></tbody>
               </table>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Vista 3: Clientes -->
+      <!-- Vista 3: Clientes (Ejercicio 2) -->
       <section id="clientes" class="view-section" aria-labelledby="title-clientes">
         <header class="view-header">
           <h2 id="title-clientes" class="view-title" tabindex="-1">Registro de Clientes</h2>
-          <p class="view-description">Alta y nómina de clientes habilitados para emitir comprobantes de venta.</p>
+          <p class="view-description">Alta de clientes y consulta individual por ID (GET /clientes/{id}) y nómina general.</p>
         </header>
         <div class="view-content" id="clientes-content">
           <div class="card form-card">
-            <h3 class="card-subtitle">Registrar Nuevo Cliente</h3>
+            <h3 class="card-subtitle">Registrar Nuevo Cliente (POST /clientes/)</h3>
             <div id="cliente-feedback" class="form-feedback" aria-live="polite"></div>
             <form id="form-cliente" class="app-form" novalidate>
               <div class="form-row">
                 <div class="form-group form-col">
                   <label for="cliente-nombre" class="form-label">Nombre Completo <span class="required">*</span></label>
-                  <input type="text" id="cliente-nombre" name="nombreCompleto" class="form-control" required placeholder="Ej. Juan Pérez" autocomplete="off">
+                  <input type="text" id="cliente-nombre" name="nombre" class="form-control" required placeholder="Ej. Juan Pérez" autocomplete="off">
                   <span class="field-error" id="error-cliente-nombre" aria-live="polite"></span>
                 </div>
 
@@ -204,31 +264,42 @@
             </form>
           </div>
 
-          <div class="card table-card">
-            <h3 class="card-subtitle">Nómina de Clientes Registrados</h3>
+          <!-- Consulta Individual por ID (Requisito explícito de la consigna) -->
+          <div class="card form-card" style="margin-top: 1.5rem;">
+            <h3 class="card-subtitle">Consultar Cliente por ID (GET /clientes/{id})</h3>
+            <div style="display: flex; gap: 0.5rem; max-width: 400px; margin-bottom: 1rem;">
+              <input type="number" id="cliente-buscar-id" class="form-control" placeholder="ID de cliente (ej. 1)" min="1" step="1">
+              <button type="button" class="btn btn-secondary" id="btn-buscar-cliente-id">Buscar</button>
+            </div>
+            <div id="cliente-consulta-resultado" style="padding: 0.75rem; background: var(--bg-surface-alt); border-radius: var(--radius-sm); border: 1px solid var(--border-color); display: none;"></div>
+          </div>
+
+          <div class="card table-card" style="margin-top: 1.5rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+              <h3 class="card-subtitle" style="margin-bottom: 0;">Nómina de Clientes Registrados</h3>
+              <button type="button" class="btn btn-secondary btn-pagination" id="btn-refresh-clientes">Actualizar</button>
+            </div>
             <div class="table-responsive" id="clientes-table-container">
               <table class="table" id="tabla-clientes">
                 <thead>
                   <tr>
                     <th scope="col">ID</th>
-                    <th scope="col">Nombre Completo</th>
+                    <th scope="col">Nombre</th>
                     <th scope="col">Correo Electrónico</th>
                   </tr>
                 </thead>
-                <tbody id="clientes-table-body">
-                  <!-- Filas renderizadas dinámicamente por clientes.view.js -->
-                </tbody>
+                <tbody id="clientes-table-body"></tbody>
               </table>
             </div>
           </div>
         </div>
       </section>
 
-      <!-- Vista 4: Ventas -->
+      <!-- Vista 4: Ventas (Ejercicio 3) -->
       <section id="ventas" class="view-section" aria-labelledby="title-ventas">
         <header class="view-header">
-          <h2 id="title-ventas" class="view-title" tabindex="-1">Simulación de Ventas</h2>
-          <p class="view-description">Composición de operaciones, cálculo de importes y congelamiento de precio histórico.</p>
+          <h2 id="title-ventas" class="view-title" tabindex="-1">Registrar Venta</h2>
+          <p class="view-description">Composición de venta, validación de renglones y confirmación en la API (POST /ventas/).</p>
         </header>
         <div class="view-content" id="ventas-content">
           <div class="ventas-layout">
@@ -238,12 +309,16 @@
               <h3 class="card-subtitle">Datos de la Venta</h3>
               <div id="venta-feedback" class="form-feedback" aria-live="polite"></div>
               
-              <!-- Selección de Cliente -->
+              <!-- Selección de Cliente con opción de ID -->
               <div class="form-group">
                 <label for="venta-cliente" class="form-label">Cliente Comprador <span class="required">*</span></label>
                 <select id="venta-cliente" name="clienteId" class="form-control" required>
                   <option value="">-- Seleccione un cliente --</option>
                 </select>
+                <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
+                  <input type="number" id="venta-cliente-id-search" class="form-control" min="1" step="1" placeholder="O ingresar ID">
+                  <button type="button" class="btn btn-secondary btn-pagination" id="btn-venta-verificar-cliente">Buscar ID</button>
+                </div>
                 <span class="field-error" id="error-venta-cliente" aria-live="polite"></span>
               </div>
 
@@ -264,7 +339,7 @@
               <div class="form-group">
                 <label for="venta-cantidad" class="form-label">Cantidad <span class="required">*</span></label>
                 <input type="number" id="venta-cantidad" name="cantidad" class="form-control" min="1" step="1" value="1">
-                <small class="form-hint">Número entero mayor o igual a 1.</small>
+                <small class="form-hint">Número entero positivo mayor o igual a 1.</small>
                 <span class="field-error" id="error-venta-cantidad" aria-live="polite"></span>
               </div>
 
@@ -282,30 +357,31 @@
                   <thead>
                     <tr>
                       <th scope="col">Libro</th>
-                      <th scope="col">Precio Unit.</th>
+                      <th scope="col">Precio Catálogo</th>
                       <th scope="col">Cantidad</th>
-                      <th scope="col">Subtotal</th>
+                      <th scope="col">Subtotal Est.</th>
                       <th scope="col">Acciones</th>
                     </tr>
                   </thead>
-                  <tbody id="borrador-table-body">
-                    <!-- Renglones en borrador renderizados dinámicamente -->
-                  </tbody>
+                  <tbody id="borrador-table-body"></tbody>
                 </table>
               </div>
 
               <!-- Resumen financiero y confirmación -->
               <div class="ventas-summary-box">
                 <div class="ventas-total-row">
-                  <span class="ventas-total-label">Total de la Orden:</span>
+                  <span class="ventas-total-label">Total Estimado:</span>
                   <span class="ventas-total-amount" id="venta-total-general">$0.00</span>
                 </div>
                 <div class="ventas-actions">
                   <button type="button" class="btn btn-primary btn-lg btn-block" id="btn-confirmar-venta">
-                    Confirmar Venta
+                    Confirmar Venta en API
                   </button>
                 </div>
               </div>
+
+              <!-- Resumen de venta confirmada devuelta por la API -->
+              <div id="venta-confirmada-resumen" style="display: none;"></div>
 
             </div>
 
@@ -313,32 +389,40 @@
         </div>
       </section>
 
-      <!-- Vista 5: Historial -->
+      <!-- Vista 5: Historial (Ejercicio 3) -->
       <section id="historial" class="view-section" aria-labelledby="title-historial">
         <header class="view-header">
           <h2 id="title-historial" class="view-title" tabindex="-1">Historial de Ventas</h2>
-          <p class="view-description">Auditoría inmutable de comprobantes emitidos y detalle de renglones.</p>
+          <p class="view-description">Auditoría inmutable de comprobantes emitidos en PostgreSQL y detalle con importes históricos.</p>
         </header>
         <div class="view-content" id="historial-content">
           <div class="historial-container">
-            <div id="historial-vacio" class="card placeholder-card" role="status">
-              <p class="placeholder-text">No hay ventas registradas en el sistema todavía.</p>
-            </div>
-            <div class="table-responsive" id="historial-table-container" hidden>
+            <div id="historial-state" aria-live="polite"></div>
+            <div class="table-responsive" id="historial-table-container">
               <table class="table" id="tabla-historial-ventas">
                 <thead>
                   <tr>
                     <th scope="col">ID Venta</th>
                     <th scope="col">Fecha y Hora</th>
-                    <th scope="col">Cliente</th>
-                    <th scope="col">Total</th>
-                    <th scope="col">Detalle</th>
+                    <th scope="col">Cliente ID</th>
+                    <th scope="col">Total Confirmado</th>
+                    <th scope="col">Acción</th>
                   </tr>
                 </thead>
-                <tbody id="historial-table-body">
-                  <!-- Transacciones confirmadas renderizadas dinámicamente -->
-                </tbody>
+                <tbody id="historial-table-body"></tbody>
               </table>
+            </div>
+
+            <div class="pagination-bar" id="historial-pagination" hidden>
+              <span class="pagination-info" id="historial-pagination-info">Mostrando página 1</span>
+              <div class="pagination-controls">
+                <button type="button" class="btn btn-secondary btn-pagination" id="btn-historial-prev" disabled>
+                  &larr; Anterior
+                </button>
+                <button type="button" class="btn btn-secondary btn-pagination" id="btn-historial-next" disabled>
+                  Siguiente &rarr;
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -347,11 +431,39 @@
     </div>
   </main>
 
+  <!-- Modal Accesible: Detalle de Libro y Autorías (GET /libros/{id}) -->
+  <dialog id="modal-libro-detalle" class="app-modal" aria-labelledby="modal-libro-titulo">
+    <div class="modal-header">
+      <h3 id="modal-libro-titulo" class="modal-title">Detalle del Libro</h3>
+      <button type="button" class="btn-close-modal" id="btn-cerrar-modal-libro" aria-label="Cerrar modal">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-libro-contenido">
+      <!-- Se puebla dinámicamente -->
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" id="btn-modal-libro-ok">Cerrar</button>
+    </div>
+  </dialog>
+
+  <!-- Modal Accesible: Detalle Histórico de Venta (GET /ventas/{id}) -->
+  <dialog id="modal-venta-detalle" class="app-modal" aria-labelledby="modal-venta-titulo">
+    <div class="modal-header">
+      <h3 id="modal-venta-titulo" class="modal-title">Detalle de Comprobante de Venta</h3>
+      <button type="button" class="btn-close-modal" id="btn-cerrar-modal-venta" aria-label="Cerrar modal">&times;</button>
+    </div>
+    <div class="modal-body" id="modal-venta-contenido">
+      <!-- Se puebla dinámicamente -->
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" id="btn-modal-venta-ok">Cerrar</button>
+    </div>
+  </dialog>
+
   <!-- Pie de página institucional -->
   <footer class="app-footer" role="contentinfo">
     <div class="footer-container">
       <p class="footer-text">&copy; 2026 Librería Central — Programación III (UTN FRM)</p>
-      <p class="footer-meta">Single Page Application nativa — HTML5 semántico, CSS3 y JavaScript ES6+</p>
+      <p class="footer-meta">Evaluación Global · Conexión FastAPI + PostgreSQL + Nginx Docker</p>
     </div>
   </footer>
 </body>

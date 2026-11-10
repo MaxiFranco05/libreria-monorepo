@@ -1,9 +1,10 @@
 /**
  * ============================================================================
- * Libros View - Formulario y Controlador de Alta de Libros (C-03)
+ * Libros View - Formulario y Controlador de Alta de Libros (Ejercicio 2)
  * ============================================================================
  * Maneja la interacción del formulario de libros, validación en cliente,
- * prevención de recarga y actualización reactiva en el catálogo (RN-LIB-01 a RN-LIB-06).
+ * consulta de editoriales/géneros, verificación de autores con GET /autores/{id},
+ * alta mediante POST /libros/ (201) y manejo de errores 409 (ISBN duplicado) o 422.
  */
 
 (function () {
@@ -13,21 +14,19 @@
   root.LibreriaApp = root.LibreriaApp || {};
   root.LibreriaApp.views = root.LibreriaApp.views || {};
 
+  // Estado temporal de autorías para el libro en creación
+  let pendingAuthors = [];
+  let lastVerifiedAuthor = null;
+
   /**
-   * Muestra un mensaje en el contenedor de feedback del formulario
-   * @param {string} message - Texto del mensaje
-   * @param {'success'|'error'} type - Tipo de mensaje
+   * Muestra mensaje en el contenedor de feedback del formulario
+   * @param {string} message
+   * @param {'success'|'error'} type
    */
   function setFeedback(message, type) {
-    if (typeof document === 'undefined') return;
     const container = document.getElementById('libro-feedback');
     if (!container) return;
-
-    // Limpieza segura sin innerHTML
-    while (container.firstChild) {
-      container.removeChild(container.firstChild);
-    }
-
+    container.innerHTML = '';
     if (!message) return;
 
     const alertDiv = document.createElement('div');
@@ -37,24 +36,16 @@
   }
 
   /**
-   * Muestra u oculta el mensaje de error de un campo específico
-   * @param {string} errorElementId - ID del elemento de error
-   * @param {string} inputId - ID del campo de entrada (opcional)
-   * @param {string|null} message - Mensaje de error (null para limpiar)
+   * Asigna o limpia un mensaje de error por campo
    */
   function setFieldError(errorElementId, inputId, message) {
-    if (typeof document === 'undefined') return;
     const errorEl = document.getElementById(errorElementId);
     const inputEl = inputId ? document.getElementById(inputId) : null;
 
     if (errorEl) {
-      if (message) {
-        errorEl.textContent = message;
-        errorEl.classList.add('active');
-      } else {
-        errorEl.textContent = '';
-        errorEl.classList.remove('active');
-      }
+      errorEl.textContent = message || '';
+      if (message) errorEl.classList.add('active');
+      else errorEl.classList.remove('active');
     }
 
     if (inputEl) {
@@ -68,337 +59,419 @@
     }
   }
 
-  /**
-   * Limpia todos los errores visibles del formulario
-   */
-  function clearFieldErrors() {
+  function clearAllErrors() {
     setFieldError('error-libro-titulo', 'libro-titulo', null);
     setFieldError('error-libro-isbn', 'libro-isbn', null);
     setFieldError('error-libro-precio', 'libro-precio', null);
+    setFieldError('error-libro-stock', 'libro-stock', null);
     setFieldError('error-libro-editorial', 'libro-editorial', null);
     setFieldError('error-libro-genero', 'libro-genero', null);
+    setFieldError('error-libro-autores', null, null);
+    setFeedback('', 'success');
+  }
+
+  /**
+   * Carga dinámica de selects de Editoriales y Géneros desde la API
+   */
+  async function loadSelectOptions() {
+    const api = root.LibreriaApp.api;
+    const editorialSelect = document.getElementById('libro-editorial');
+    const generoSelect = document.getElementById('libro-genero');
+
+    try {
+      const [editoriales, generos] = await Promise.all([
+        api.getEditoriales(),
+        api.getGeneros()
+      ]);
+
+      if (root.LibreriaApp.state) {
+        if (root.LibreriaApp.state.setEditoriales) root.LibreriaApp.state.setEditoriales(editoriales);
+        if (root.LibreriaApp.state.setGeneros) root.LibreriaApp.state.setGeneros(generos);
+      }
+
+      if (editorialSelect) {
+        editorialSelect.innerHTML = '<option value="">-- Seleccione una editorial --</option>';
+        editoriales.forEach((ed) => {
+          const opt = document.createElement('option');
+          opt.value = ed.id;
+          opt.textContent = `${ed.nombre}${ed.pais ? ` (${ed.pais})` : ''}`;
+          editorialSelect.appendChild(opt);
+        });
+      }
+
+      if (generoSelect) {
+        generoSelect.innerHTML = '<option value="">«Sin clasificar»</option>';
+        generos.forEach((gen) => {
+          const opt = document.createElement('option');
+          opt.value = gen.id;
+          opt.textContent = gen.nombre;
+          generoSelect.appendChild(opt);
+        });
+      }
+    } catch (err) {
+      console.error('[LibrosView] Error cargando editoriales o géneros:', err);
+      if (editorialSelect) editorialSelect.innerHTML = '<option value="">Error al cargar opciones</option>';
+    }
+  }
+
+  /**
+   * Renderiza los chips de autorías agregadas para el nuevo libro
+   */
+  function renderAuthorChips() {
+    const container = document.getElementById('libro-autores-agregados');
+    if (!container) return;
+    container.innerHTML = '';
+
+    if (pendingAuthors.length === 0) {
+      container.innerHTML = '<span class="text-muted" style="font-size: 0.85rem; font-style: italic;">No hay autorías añadidas todavía (se requiere al menos una).</span>';
+      return;
+    }
+
+    pendingAuthors.forEach((item, index) => {
+      const chip = document.createElement('div');
+      chip.className = 'author-chip';
+      chip.innerHTML = `
+        <span><strong>#${item.orden}</strong> ${escapeHtml(item.nombre)}</span>
+        <span class="chip-role">(${escapeHtml(item.rol)})</span>
+        <button type="button" class="btn-remove-chip" aria-label="Eliminar autoría">&times;</button>
+      `;
+
+      chip.querySelector('.btn-remove-chip').addEventListener('click', () => {
+        pendingAuthors.splice(index, 1);
+        renderAuthorChips();
+      });
+
+      container.appendChild(chip);
+    });
+  }
+
+  function escapeHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  /**
+   * Verifica un autor mediante GET /autores/{id} (Ejercicio 2)
+   */
+  async function verifyAuthorById() {
+    const idInput = document.getElementById('libro-autor-id-input');
+    const infoSpan = document.getElementById('libro-autor-verificado-info');
+    if (!idInput || !infoSpan) return;
+
+    const autorId = parseInt(idInput.value, 10);
+    if (isNaN(autorId) || autorId <= 0) {
+      infoSpan.textContent = 'Ingrese un ID numérico de autor válido (>= 1).';
+      infoSpan.style.color = 'var(--color-error)';
+      lastVerifiedAuthor = null;
+      return;
+    }
+
+    infoSpan.textContent = 'Verificando con la API...';
+    infoSpan.style.color = 'var(--text-secondary)';
+
+    try {
+      const autor = await root.LibreriaApp.api.getAutor(autorId);
+      lastVerifiedAuthor = autor;
+      infoSpan.textContent = `✓ Autor encontrado: ${autor.nombre} (${autor.nacionalidad || 'N/D'})`;
+      infoSpan.style.color = '#15803d'; // Verde éxito
+    } catch (err) {
+      lastVerifiedAuthor = null;
+      infoSpan.textContent = `✗ ${err.message || 'Autor no encontrado en la base de datos (404)'}`;
+      infoSpan.style.color = 'var(--color-error)';
+    }
+  }
+
+  /**
+   * Agrega el autor verificado a la lista pendingAuthors
+   */
+  function addVerifiedAuthorToList() {
+    const infoSpan = document.getElementById('libro-autor-verificado-info');
+    const rolSelect = document.getElementById('libro-autor-rol');
+    const ordenInput = document.getElementById('libro-autor-orden');
+    const idInput = document.getElementById('libro-autor-id-input');
+
+    if (!lastVerifiedAuthor) {
+      if (infoSpan) {
+        infoSpan.textContent = 'Debe verificar primero un ID de autor existente con la API.';
+        infoSpan.style.color = 'var(--color-error)';
+      }
+      return;
+    }
+
+    const rol = rolSelect ? rolSelect.value : 'autor';
+    const orden = ordenInput ? (parseInt(ordenInput.value, 10) || 1) : 1;
+
+    // Verificar si ya está agregado
+    const existingIndex = pendingAuthors.findIndex((a) => a.autor_id === lastVerifiedAuthor.id);
+    if (existingIndex !== -1) {
+      pendingAuthors[existingIndex].rol = rol;
+      pendingAuthors[existingIndex].orden = orden;
+    } else {
+      pendingAuthors.push({
+        autor_id: lastVerifiedAuthor.id,
+        nombre: lastVerifiedAuthor.nombre,
+        rol,
+        orden
+      });
+    }
+
+    // Ordenar por campo orden
+    pendingAuthors.sort((a, b) => a.orden - b.orden);
+    renderAuthorChips();
+
+    // Limpiar input y mensaje de autor verificado
+    if (idInput) idInput.value = '';
+    if (infoSpan) infoSpan.textContent = '';
+    if (ordenInput) ordenInput.value = pendingAuthors.length + 1;
+    lastVerifiedAuthor = null;
     setFieldError('error-libro-autores', null, null);
   }
 
   /**
-   * Puebla dinámicamente los selectores y grupos de checkboxes a partir del estado
+   * Carga y renderiza la tabla de libros registrados
    */
-  function populateSelects() {
-    if (typeof document === 'undefined') return;
-    const state = root.LibreriaApp.state;
-    if (!state) return;
+  async function loadBooksTable() {
+    const tbody = document.getElementById('libros-table-body');
+    if (!tbody) return;
 
-    // 1. Selector de Editoriales
-    const editorialSelect = document.getElementById('libro-editorial');
-    if (editorialSelect) {
-      // Limpiar opciones preservando la primera por defecto
-      while (editorialSelect.firstChild) {
-        editorialSelect.removeChild(editorialSelect.firstChild);
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">Cargando libros desde la API...</td></tr>';
+
+    try {
+      const state = root.LibreriaApp.state || {};
+      const formatters = root.LibreriaApp.formatters || {};
+      const formatCurrency = formatters.formatCurrency || ((v) => `$${Number(v).toFixed(2)}`);
+
+      const editoriales = state.getEditoriales ? state.getEditoriales() : [];
+      const generos = state.getGeneros ? state.getGeneros() : [];
+
+      const books = await root.LibreriaApp.api.getLibros({ limit: 50, offset: 0 });
+      if (!Array.isArray(books) || books.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;" class="text-muted">No hay libros registrados en la API.</td></tr>';
+        return;
       }
-      const defaultOpt = document.createElement('option');
-      defaultOpt.value = '';
-      defaultOpt.textContent = '-- Seleccione una editorial --';
-      editorialSelect.appendChild(defaultOpt);
 
-      const editoriales = typeof state.getEditoriales === 'function' ? state.getEditoriales() : state.getEditorials();
-      editoriales.forEach((ed) => {
-        const opt = document.createElement('option');
-        opt.value = ed.id;
-        opt.textContent = ed.nombre;
-        editorialSelect.appendChild(opt);
+      tbody.innerHTML = '';
+      books.forEach((book) => {
+        const edName = formatters.getEditorialName ? formatters.getEditorialName(book.editorial_id, editoriales) : 'N/D';
+        const genName = formatters.getGeneroName ? formatters.getGeneroName(book.genero_id, generos) : 'Sin clasificar';
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${book.id}</strong></td>
+          <td>${escapeHtml(book.titulo)}</td>
+          <td><code>${escapeHtml(book.isbn)}</code></td>
+          <td>${escapeHtml(edName)}</td>
+          <td><span class="badge ${genName === 'Sin clasificar' ? 'badge-navy' : ''}">${escapeHtml(genName)}</span></td>
+          <td>${book.stock ?? 0} u.</td>
+          <td style="font-weight: 600;">${formatCurrency(book.precio)}</td>
+          <td>
+            <button type="button" class="btn btn-secondary btn-pagination" data-book-id="${book.id}">
+              Ver Detalle
+            </button>
+          </td>
+        `;
+
+        tr.querySelector('button').addEventListener('click', () => {
+          if (root.LibreriaApp.views.catalogo && typeof root.LibreriaApp.views.catalogo.loadCatalog === 'function') {
+            // Reutilizar modal de detalle del catálogo
+            const modal = document.getElementById('modal-libro-detalle');
+            if (modal) {
+              root.LibreriaApp.views.catalogo.loadCatalog(); // sincroniza
+            }
+          }
+          // Abrir modal directamente
+          openBookModalDirect(book.id);
+        });
+
+        tbody.appendChild(tr);
       });
+    } catch (err) {
+      console.error('[LibrosView] Error cargando tabla de libros:', err);
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align: center; color: var(--color-error);">Error al cargar libros: ${escapeHtml(err.message)}</td></tr>`;
     }
+  }
 
-    // 2. Selector de Géneros (con opción «Sin clasificar» RN-CAT-06 y RN-LIB-05)
-    const generoSelect = document.getElementById('libro-genero');
-    if (generoSelect) {
-      while (generoSelect.firstChild) {
-        generoSelect.removeChild(generoSelect.firstChild);
-      }
-      const defaultOpt = document.createElement('option');
-      defaultOpt.value = '';
-      defaultOpt.textContent = '«Sin clasificar»';
-      generoSelect.appendChild(defaultOpt);
+  async function openBookModalDirect(bookId) {
+    const modal = document.getElementById('modal-libro-detalle');
+    const modalTitle = document.getElementById('modal-libro-titulo');
+    const modalBody = document.getElementById('modal-libro-contenido');
+    if (!modal || !modalBody) return;
 
-      const generos = typeof state.getGeneros === 'function' ? state.getGeneros() : state.getGenres();
-      generos.forEach((gen) => {
-        const opt = document.createElement('option');
-        opt.value = gen.id;
-        opt.textContent = gen.nombre;
-        generoSelect.appendChild(opt);
-      });
-    }
+    modalTitle.textContent = 'Cargando detalle...';
+    modalBody.innerHTML = '<p style="text-align: center;">Consultando libro...</p>';
+    if (typeof modal.showModal === 'function') modal.showModal();
+    else modal.setAttribute('open', '');
 
-    // 3. Checkboxes de Autores
-    const autoresContainer = document.getElementById('libro-autores-group');
-    if (autoresContainer) {
-      while (autoresContainer.firstChild) {
-        autoresContainer.removeChild(autoresContainer.firstChild);
-      }
-      const autores = typeof state.getAutores === 'function' ? state.getAutores() : state.getAuthors();
-      autores.forEach((aut) => {
-        const label = document.createElement('label');
-        label.className = 'checkbox-label';
+    try {
+      const book = await root.LibreriaApp.api.getLibro(bookId);
+      modalTitle.textContent = book.titulo;
+      const formatCurrency = root.LibreriaApp.formatters?.formatCurrency || ((v) => `$${Number(v).toFixed(2)}`);
+      const autorias = Array.isArray(book.autorias) ? book.autorias : [];
 
-        const checkbox = document.createElement('input');
-        checkbox.type = 'checkbox';
-        checkbox.name = 'autorIds';
-        checkbox.value = aut.id;
-        checkbox.id = `autor-${aut.id}`;
-
-        const span = document.createElement('span');
-        span.textContent = aut.nombre || aut.nombreCompleto || '';
-
-        label.appendChild(checkbox);
-        label.appendChild(span);
-        autoresContainer.appendChild(label);
-      });
+      modalBody.innerHTML = `
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          <div><strong>ISBN:</strong> ${escapeHtml(book.isbn)} | <strong>Precio:</strong> ${formatCurrency(book.precio)} | <strong>Stock:</strong> ${book.stock}</div>
+          <div><strong>Editorial:</strong> ${escapeHtml(book.editorial?.nombre || 'N/D')} | <strong>Género:</strong> ${escapeHtml(book.genero?.nombre || 'Sin clasificar')}</div>
+          <h4 style="margin-top: 1rem; color: var(--accent-navy);">Autorías registradas (GET /libros/${bookId}):</h4>
+          <table class="table" style="font-size: 0.9rem;">
+            <thead><tr><th>Orden</th><th>Autor</th><th>Rol</th><th>Nacionalidad</th></tr></thead>
+            <tbody>
+              ${autorias.map((a) => `
+                <tr>
+                  <td>#${a.orden ?? 1}</td>
+                  <td>${escapeHtml(a.autor?.nombre || 'Desconocido')}</td>
+                  <td><span class="badge">${escapeHtml(a.rol)}</span></td>
+                  <td>${escapeHtml(a.autor?.nacionalidad || 'N/D')}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+    } catch (e) {
+      modalBody.innerHTML = `<p style="color: var(--color-error);">${escapeHtml(e.message)}</p>`;
     }
   }
 
   /**
-   * Procesa el envío del formulario de libros
-   * @param {Event} [e] - Evento submit
-   * @returns {{ success: boolean, error?: string, book?: Object }}
+   * Procesa el envío del formulario mediante POST /libros/
+   * @param {Event} e
    */
-  function handleFormSubmit(e) {
-    if (e && typeof e.preventDefault === 'function') {
-      e.preventDefault();
-    }
-
-    setFeedback('', 'success');
-    clearFieldErrors();
-
-    if (typeof document === 'undefined') {
-      return { success: false, error: 'DOM no disponible' };
-    }
-
-    const state = root.LibreriaApp.state;
-    const validators = root.LibreriaApp.validators;
-    if (!state || !validators) {
-      return { success: false, error: 'Módulos no disponibles' };
-    }
+  async function handleSubmit(e) {
+    e.preventDefault();
+    clearAllErrors();
 
     const tituloInput = document.getElementById('libro-titulo');
     const isbnInput = document.getElementById('libro-isbn');
     const precioInput = document.getElementById('libro-precio');
+    const stockInput = document.getElementById('libro-stock');
     const editorialSelect = document.getElementById('libro-editorial');
     const generoSelect = document.getElementById('libro-genero');
-    const autoresCheckboxes = document.querySelectorAll('input[name="autorIds"]:checked');
 
-    const titulo = tituloInput ? tituloInput.value : '';
-    const isbn = isbnInput ? isbnInput.value : '';
-    const precio = precioInput ? precioInput.value : '';
-    const editorialId = editorialSelect ? editorialSelect.value : '';
-    const generoId = generoSelect ? generoSelect.value : '';
-    const autorIds = Array.from(autoresCheckboxes).map((cb) => cb.value);
-
-    // Ejecutar validaciones puras
-    const existingBooks = typeof state.getLibros === 'function' ? state.getLibros() : state.getBooks();
-    const availableEditorials = typeof state.getEditoriales === 'function' ? state.getEditoriales() : state.getEditorials();
-    const availableAuthors = typeof state.getAutores === 'function' ? state.getAutores() : state.getAuthors();
-
-    const titleCheck = validators.validateRequired(titulo, 'El título');
-    const isbnCheck = validators.validateISBN(isbn, existingBooks);
-    const priceCheck = validators.validatePrice(precio);
-    const editorialCheck = validators.validateEditorial(editorialId, availableEditorials);
-    const authorsCheck = validators.validateAuthorsSelection(autorIds, availableAuthors);
+    const titulo = tituloInput ? tituloInput.value.trim() : '';
+    const isbn = isbnInput ? isbnInput.value.trim() : '';
+    const precio = precioInput ? parseFloat(precioInput.value) : NaN;
+    const stock = stockInput ? parseInt(stockInput.value, 10) : NaN;
+    const editorialId = editorialSelect ? parseInt(editorialSelect.value, 10) : NaN;
+    const generoId = (generoSelect && generoSelect.value) ? parseInt(generoSelect.value, 10) : null;
 
     let hasErrors = false;
-    let firstInvalidInput = null;
 
-    if (!titleCheck.valid) {
+    if (!titulo) {
+      setFieldError('error-libro-titulo', 'libro-titulo', 'El título es obligatorio.');
       hasErrors = true;
-      setFieldError('error-libro-titulo', 'libro-titulo', titleCheck.error);
-      if (!firstInvalidInput) firstInvalidInput = tituloInput;
     }
-
-    if (!isbnCheck.valid) {
+    if (!isbn) {
+      setFieldError('error-libro-isbn', 'libro-isbn', 'El ISBN es obligatorio.');
       hasErrors = true;
-      setFieldError('error-libro-isbn', 'libro-isbn', isbnCheck.error);
-      if (!firstInvalidInput) firstInvalidInput = isbnInput;
     }
-
-    if (!priceCheck.valid) {
+    if (isNaN(precio) || precio <= 0) {
+      setFieldError('error-libro-precio', 'libro-precio', 'El precio debe ser un número positivo mayor a 0.');
       hasErrors = true;
-      setFieldError('error-libro-precio', 'libro-precio', priceCheck.error);
-      if (!firstInvalidInput) firstInvalidInput = precioInput;
     }
-
-    if (!editorialCheck.valid) {
+    if (isNaN(stock) || stock < 0) {
+      setFieldError('error-libro-stock', 'libro-stock', 'El stock debe ser un entero mayor o igual a 0.');
       hasErrors = true;
-      setFieldError('error-libro-editorial', 'libro-editorial', editorialCheck.error);
-      if (!firstInvalidInput) firstInvalidInput = editorialSelect;
     }
-
-    if (!authorsCheck.valid) {
+    if (isNaN(editorialId) || editorialId <= 0) {
+      setFieldError('error-libro-editorial', 'libro-editorial', 'Debe seleccionar una editorial.');
       hasErrors = true;
-      setFieldError('error-libro-autores', null, authorsCheck.error);
-      if (!firstInvalidInput) {
-        firstInvalidInput = document.getElementById('fieldset-autores');
-      }
+    }
+    if (pendingAuthors.length === 0) {
+      setFieldError('error-libro-autores', null, 'Debe asociar al menos un autor al libro.');
+      hasErrors = true;
     }
 
-    if (hasErrors) {
-      setFeedback('Por favor revise los errores señalados en el formulario.', 'error');
-      if (firstInvalidInput && typeof firstInvalidInput.focus === 'function') {
-        firstInvalidInput.focus();
-      }
-      return { success: false, error: 'Validación fallida' };
+    if (hasErrors) return;
+
+    const submitBtn = document.getElementById('btn-submit-libro');
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'Registrando en API...';
     }
 
-    // Construcción de la nueva entidad Libro
-    const newBook = {
-      id: `lib-${Date.now()}`,
-      titulo: titleCheck.sanitizedValue,
-      isbn: isbnCheck.sanitizedValue,
-      precio: priceCheck.sanitizedValue,
-      editorialId: editorialCheck.sanitizedValue,
-      generoId: generoId && generoId.trim() !== '' ? generoId : null,
-      autorIds: authorsCheck.sanitizedValue
+    const payload = {
+      titulo,
+      isbn,
+      precio,
+      stock,
+      editorial_id: editorialId,
+      genero_id: generoId,
+      autores: pendingAuthors.map((a) => ({
+        autor_id: a.autor_id,
+        rol: a.rol,
+        orden: a.orden
+      }))
     };
 
-    const added = typeof state.addLibro === 'function' ? state.addLibro(newBook) : state.addBook(newBook);
-    if (!added) {
-      setFeedback('Error inesperado al registrar el libro en el estado.', 'error');
-      return { success: false, error: 'No se pudo guardar el libro' };
-    }
+    try {
+      const createdBook = await root.LibreriaApp.api.createLibro(payload);
 
-    // Limpieza de formulario y feedback de éxito
-    const form = document.getElementById('form-libro');
-    if (form) {
-      form.reset();
-    }
-    clearFieldErrors();
-    setFeedback(`¡El libro "${newBook.titulo}" fue registrado exitosamente en el catálogo!`, 'success');
+      setFeedback(`¡Libro "${createdBook.titulo}" registrado exitosamente con ID ${createdBook.id}!`, 'success');
 
-    return { success: true, book: newBook };
+      // Limpiar formulario y estado de autorías
+      const form = document.getElementById('form-libro');
+      if (form) form.reset();
+      pendingAuthors = [];
+      renderAuthorChips();
+
+      // Recargar tabla de libros y catálogo
+      await loadBooksTable();
+      if (root.LibreriaApp.views.catalogo && typeof root.LibreriaApp.views.catalogo.loadCatalog === 'function') {
+        root.LibreriaApp.views.catalogo.loadCatalog({ resetOffset: true });
+      }
+    } catch (err) {
+      console.error('[LibrosView] Error al registrar libro:', err);
+      // Mostrar mensaje del servidor ante 409 o 422 sin perder el borrador
+      setFeedback(`Error del servidor (${err.status || 'Red'}): ${err.message}`, 'error');
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'Registrar Libro';
+      }
+    }
   }
 
-  /**
-   * Renderiza el listado de libros registrados en la tabla del DOM de forma 100% segura (sin innerHTML)
-   * @param {Array} [booksList] - Lista de libros a mostrar (opcional, consulta state por defecto)
-   */
-  function renderTable(booksList) {
-    if (typeof document === 'undefined') return;
-
-    const state = root.LibreriaApp.state;
-    const formatters = root.LibreriaApp.formatters;
-    const books = booksList || (state && typeof state.getLibros === 'function' ? state.getLibros() : (state && typeof state.getBooks === 'function' ? state.getBooks() : []));
-    const tbody = document.getElementById('libros-table-body');
-    if (!tbody) return;
-
-    while (tbody.firstChild) {
-      tbody.removeChild(tbody.firstChild);
-    }
-
-    if (!Array.isArray(books) || books.length === 0) {
-      const emptyRow = document.createElement('tr');
-      const emptyCell = document.createElement('td');
-      emptyCell.colSpan = 7;
-      emptyCell.textContent = 'No hay libros registrados en el sistema.';
-      emptyCell.style.textAlign = 'center';
-      emptyCell.style.color = 'var(--text-muted)';
-      emptyRow.appendChild(emptyCell);
-      tbody.appendChild(emptyRow);
-      return;
-    }
-
-    const editoriales = state && typeof state.getEditoriales === 'function' ? state.getEditoriales() : (state && typeof state.getEditorials === 'function' ? state.getEditorials() : []);
-    const generos = state && typeof state.getGeneros === 'function' ? state.getGeneros() : (state && typeof state.getGenres === 'function' ? state.getGenres() : []);
-    const autores = state && typeof state.getAutores === 'function' ? state.getAutores() : (state && typeof state.getAuthors === 'function' ? state.getAuthors() : []);
-
-    books.forEach((book) => {
-      const tr = document.createElement('tr');
-
-      const tdId = document.createElement('td');
-      tdId.textContent = book.id || '-';
-      tdId.style.fontFamily = 'monospace';
-
-      const tdTitulo = document.createElement('td');
-      tdTitulo.textContent = book.titulo || '-';
-      tdTitulo.style.fontWeight = '500';
-
-      const tdIsbn = document.createElement('td');
-      tdIsbn.textContent = book.isbn || '-';
-      tdIsbn.style.fontFamily = 'monospace';
-
-      const tdEditorial = document.createElement('td');
-      tdEditorial.textContent = formatters && typeof formatters.getEditorialName === 'function'
-        ? formatters.getEditorialName(book.editorialId, editoriales)
-        : (book.editorialId || '-');
-
-      const tdGenero = document.createElement('td');
-      const genName = formatters && typeof formatters.getGeneroName === 'function'
-        ? formatters.getGeneroName(book.generoId, generos)
-        : (book.generoId || 'Sin clasificar');
-      tdGenero.textContent = genName;
-
-      const tdAutores = document.createElement('td');
-      tdAutores.textContent = formatters && typeof formatters.formatAuthors === 'function'
-        ? formatters.formatAuthors(book.autorIds, autores)
-        : (Array.isArray(book.autorIds) ? book.autorIds.join(', ') : '-');
-
-      const tdPrecio = document.createElement('td');
-      tdPrecio.textContent = formatters && typeof formatters.formatCurrency === 'function'
-        ? formatters.formatCurrency(book.precio)
-        : `$${Number(book.precio || 0).toFixed(2)}`;
-      tdPrecio.style.fontWeight = '600';
-
-      tr.appendChild(tdId);
-      tr.appendChild(tdTitulo);
-      tr.appendChild(tdIsbn);
-      tr.appendChild(tdEditorial);
-      tr.appendChild(tdGenero);
-      tr.appendChild(tdAutores);
-      tr.appendChild(tdPrecio);
-      tbody.appendChild(tr);
-    });
-  }
-
-  /**
-   * Inicializa la vista de libros
-   */
   function init() {
-    if (typeof document === 'undefined') return;
-
-    populateSelects();
-    renderTable();
-
-    // Suscripción reactiva para refresco de tabla y selectores ante nuevos libros
-    const state = root.LibreriaApp.state;
-    if (state && typeof state.subscribe === 'function') {
-      state.subscribe((event) => {
-        if (event === 'init' || event === 'libros:updated' || event === 'book:added') {
-          populateSelects();
-          renderTable();
-        }
-      });
-    }
-
     const form = document.getElementById('form-libro');
     if (form) {
-      form.addEventListener('submit', handleFormSubmit);
+      form.addEventListener('submit', handleSubmit);
       form.addEventListener('reset', () => {
-        setTimeout(clearFieldErrors, 0);
+        pendingAuthors = [];
+        lastVerifiedAuthor = null;
+        renderAuthorChips();
+        clearAllErrors();
       });
     }
 
-    const btnReset = document.getElementById('btn-reset-libro');
-    if (btnReset) {
-      btnReset.addEventListener('click', () => {
-        setFeedback('', 'success');
-      });
+    const verifyBtn = document.getElementById('btn-verificar-autor');
+    if (verifyBtn) {
+      verifyBtn.addEventListener('click', verifyAuthorById);
     }
+
+    const addAuthorBtn = document.getElementById('btn-agregar-autor-lista');
+    if (addAuthorBtn) {
+      addAuthorBtn.addEventListener('click', addVerifiedAuthorToList);
+    }
+
+    const refreshBtn = document.getElementById('btn-refresh-libros');
+    if (refreshBtn) {
+      refreshBtn.addEventListener('click', loadBooksTable);
+    }
+
+    // Cargar selectores y tabla
+    loadSelectOptions();
+    loadBooksTable();
   }
 
   const librosView = {
     init,
-    populateSelects,
-    renderTable,
-    handleFormSubmit,
-    setFeedback,
-    clearFieldErrors
+    loadSelectOptions,
+    loadBooksTable,
+    onActivate() {
+      loadSelectOptions();
+      loadBooksTable();
+    }
   };
 
   root.LibreriaApp.views.libros = librosView;
