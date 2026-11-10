@@ -325,3 +325,14 @@ def test_clientes_view_edita_cliente_valida_y_maneja_409():
         }
     ]
     assert out["ventasReloaded"] is True
+
+
+def test_device_simulator_fits_viewport_at_100_percent_zoom():
+    layout_css = (FRONTEND_PUBLIC / "css" / "layout.css").read_text(encoding="utf-8")
+    app_js = (FRONTEND_PUBLIC / "js" / "app.js").read_text(encoding="utf-8")
+
+    assert "height: min(844px, calc(100vh - 4.25rem))" in layout_css
+    assert "height: min(844px, calc(100dvh - 4.25rem))" in layout_css
+    assert "flex-shrink: 0;" in layout_css
+    assert "e.key === 'Escape'" in app_js
+

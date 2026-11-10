@@ -57,8 +57,8 @@
   }
 
   /**
-   * Simulador de vista de teléfono móvil (390x844) para evaluación y defensa
-   * Carga un iframe sandbox con viewport nativo de 390x844px para 100% de paridad con DevTools.
+   * Simulador de vista de teléfono móvil (390px) para evaluación y defensa
+   * Carga un iframe sandbox con viewport móvil nativo adaptable a la altura de la pantalla.
    */
   function toggleDeviceSimulator() {
     const overlay = document.getElementById('device-simulator-overlay');
@@ -89,7 +89,7 @@
   }
 
   /**
-   * Cierre accesible de modales al hacer clic sobre el backdrop
+   * Cierre accesible de modales y del simulador móvil al hacer clic sobre el backdrop o presionar Escape
    */
   function setupBackdropModalClose() {
     const dialogs = document.querySelectorAll('dialog.app-modal');
@@ -106,6 +106,21 @@
           dialog.close();
         }
       });
+    });
+
+    const simOverlay = document.getElementById('device-simulator-overlay');
+    if (simOverlay) {
+      simOverlay.addEventListener('click', (e) => {
+        if (e.target === simOverlay || e.target.classList.contains('simulator-phone-frame')) {
+          toggleDeviceSimulator();
+        }
+      });
+    }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && simOverlay && simOverlay.classList.contains('active')) {
+        toggleDeviceSimulator();
+      }
     });
   }
 
