@@ -268,14 +268,23 @@
           <td style="white-space: nowrap;"><span class="stock-pill"><span class="stock-dot"></span>${book.stock ?? 0} u.</span></td>
           <td style="font-family: var(--font-family-mono); font-weight: 600; white-space: nowrap;">${formatCurrency(book.precio)}</td>
           <td style="text-align: right; white-space: nowrap;">
-            <button type="button" class="btn btn-secondary btn-pagination" data-book-id="${book.id}">
-              Ver Detalle
-            </button>
+            <div style="display: inline-flex; gap: 0.35rem; justify-content: flex-end;">
+              <button type="button" class="btn btn-secondary btn-pagination btn-detalle-libro" data-book-id="${book.id}">
+                Detalle
+              </button>
+              <button type="button" class="btn btn-outline btn-pagination btn-editar-libro" data-book-id="${book.id}">
+                Editar
+              </button>
+            </div>
           </td>
         `;
 
-        tr.querySelector('button').addEventListener('click', () => {
+        tr.querySelector('.btn-detalle-libro').addEventListener('click', () => {
           openBookModalDirect(book.id);
+        });
+
+        tr.querySelector('.btn-editar-libro').addEventListener('click', () => {
+          openEditBookModal(book);
         });
 
         tbody.appendChild(tr);
@@ -289,6 +298,109 @@
   function openBookModalDirect(bookId) {
     if (root.LibreriaApp.views.catalogo && typeof root.LibreriaApp.views.catalogo.showBookDetail === 'function') {
       root.LibreriaApp.views.catalogo.showBookDetail(bookId);
+    }
+  }
+
+  /**
+   * Abre el modal de edición de libro para modificar stock o precio
+   * @param {Object} book
+   */
+  function openEditBookModal(book) {
+    const modal = document.getElementById('modal-editar-libro');
+    if (!modal) return;
+
+    const idInput = document.getElementById('editar-libro-id');
+    const tituloInput = document.getElementById('editar-libro-titulo');
+    const stockInput = document.getElementById('editar-libro-stock');
+    const precioInput = document.getElementById('editar-libro-precio');
+    const pillsContainer = document.getElementById('modal-editar-pills');
+    const feedback = document.getElementById('editar-libro-feedback');
+
+    if (idInput) idInput.value = book.id;
+    if (tituloInput) tituloInput.value = book.titulo || '';
+    if (stockInput) stockInput.value = book.stock !== undefined ? book.stock : 0;
+    if (precioInput) precioInput.value = book.precio !== undefined ? Number(book.precio).toFixed(2) : '0.00';
+    if (feedback) feedback.innerHTML = '';
+
+    if (pillsContainer) {
+      pillsContainer.innerHTML = `
+        <span class="meta-pill isbn-pill">ISBN ${escapeHtml(book.isbn || '')}</span>
+        <span class="meta-pill stock-pill-modal"><span class="stock-dot"></span>${book.stock ?? 0} u. actuales</span>
+      `;
+    }
+
+    if (typeof modal.showModal === 'function') modal.showModal();
+    else modal.setAttribute('open', '');
+  }
+
+  /**
+   * Procesa la actualización parcial de un libro (PATCH /libros/{id})
+   */
+  async function handleEditSubmit(e) {
+    e.preventDefault();
+    const idInput = document.getElementById('editar-libro-id');
+    const tituloInput = document.getElementById('editar-libro-titulo');
+    const stockInput = document.getElementById('editar-libro-stock');
+    const precioInput = document.getElementById('editar-libro-precio');
+    const feedback = document.getElementById('editar-libro-feedback');
+    const modal = document.getElementById('modal-editar-libro');
+    const saveBtn = document.getElementById('btn-guardar-editar-libro');
+
+    const bookId = parseInt(idInput.value, 10);
+    const titulo = tituloInput.value.trim();
+    const stock = parseInt(stockInput.value, 10);
+    const precio = parseFloat(precioInput.value);
+
+    if (isNaN(bookId) || bookId <= 0) return;
+
+    if (!titulo) {
+      if (feedback) feedback.innerHTML = '<div class="alert alert-error">El título no puede estar vacío.</div>';
+      return;
+    }
+    if (isNaN(stock) || stock < 0) {
+      if (feedback) feedback.innerHTML = '<div class="alert alert-error">El stock no puede ser negativo.</div>';
+      return;
+    }
+    if (isNaN(precio) || precio <= 0) {
+      if (feedback) feedback.innerHTML = '<div class="alert alert-error">El precio debe ser un número positivo mayor a 0.</div>';
+      return;
+    }
+
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.textContent = 'Guardando...';
+    }
+
+    try {
+      await root.LibreriaApp.api.patchLibro(bookId, {
+        titulo,
+        stock,
+        precio
+      });
+
+      if (typeof modal.close === 'function') modal.close();
+      else modal.removeAttribute('open');
+
+      setFeedback(`¡Libro #${bookId} ("${titulo}") actualizado con éxito! Nuevo stock: ${stock} u.`, 'success');
+      await loadBooksTable();
+
+      // Sincronizar catálogo y ventas si están cargados
+      if (root.LibreriaApp.views.catalogo && typeof root.LibreriaApp.views.catalogo.loadCatalog === 'function') {
+        root.LibreriaApp.views.catalogo.loadCatalog({ resetOffset: false });
+      }
+      if (root.LibreriaApp.views.ventas && typeof root.LibreriaApp.views.ventas.loadBookOptions === 'function') {
+        root.LibreriaApp.views.ventas.loadBookOptions();
+      }
+    } catch (err) {
+      console.error('[LibrosView] Error actualizando libro:', err);
+      if (feedback) {
+        feedback.innerHTML = `<div class="alert alert-error">Error al guardar: ${escapeHtml(err.message)}</div>`;
+      }
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = 'Guardar Cambios';
+      }
     }
   }
 
@@ -417,6 +529,23 @@
     if (refreshBtn) {
       refreshBtn.addEventListener('click', loadBooksTable);
     }
+
+    // Modal de edición de libro
+    const editForm = document.getElementById('form-editar-libro');
+    if (editForm) {
+      editForm.addEventListener('submit', handleEditSubmit);
+    }
+
+    const modalEditar = document.getElementById('modal-editar-libro');
+    const closeEditBtn = document.getElementById('btn-cerrar-modal-editar');
+    const cancelEditBtn = document.getElementById('btn-cancelar-editar-libro');
+    const closeEditModal = () => {
+      if (!modalEditar) return;
+      if (typeof modalEditar.close === 'function') modalEditar.close();
+      else modalEditar.removeAttribute('open');
+    };
+    if (closeEditBtn) closeEditBtn.addEventListener('click', closeEditModal);
+    if (cancelEditBtn) cancelEditBtn.addEventListener('click', closeEditModal);
 
     // Cargar selectores y tabla
     loadSelectOptions();

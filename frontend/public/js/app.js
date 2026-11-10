@@ -58,16 +58,35 @@
 
   /**
    * Simulador de vista de teléfono móvil (390x844) para evaluación y defensa
+   * Carga un iframe sandbox con viewport nativo de 390x844px para 100% de paridad con DevTools.
    */
   function toggleDeviceSimulator() {
-    const isSimulator = document.body.classList.toggle('device-simulator-mode');
-    const btnText = document.getElementById('simulator-btn-text');
-    if (btnText) {
-      btnText.textContent = isSimulator ? 'Salir de Móvil' : 'Simular Móvil';
+    const overlay = document.getElementById('device-simulator-overlay');
+    const iframe = document.getElementById('simulator-iframe');
+    if (!overlay) return;
+
+    const isActive = overlay.classList.toggle('active');
+    if (isActive) {
+      document.body.style.overflow = 'hidden';
+      if (iframe) {
+        // Cargar URL actual en el iframe
+        iframe.src = window.location.href;
+      }
+    } else {
+      document.body.style.overflow = '';
+      if (iframe) {
+        iframe.src = 'about:blank';
+      }
     }
   }
   root.toggleDeviceSimulator = toggleDeviceSimulator;
   window.toggleDeviceSimulator = toggleDeviceSimulator;
+
+  // Si esta página corre dentro de un iframe (el simulador), ocultar el botón del simulador
+  if (window.self !== window.top) {
+    const simBtn = document.getElementById('simulator-toggle');
+    if (simBtn) simBtn.style.display = 'none';
+  }
 
   /**
    * Cierre accesible de modales al hacer clic sobre el backdrop

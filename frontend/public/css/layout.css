@@ -18,14 +18,14 @@
   z-index: 100;
   padding: 0.75rem 1rem 0.5rem;
   width: 100%;
-  max-width: 1180px;
+  max-width: 1360px;
   margin: 0 auto;
 }
 
 .content-container,
 .footer-container {
   width: 100%;
-  max-width: 1180px;
+  max-width: 1360px;
   margin: 0 auto;
   padding: 0 1.25rem;
 }
@@ -294,94 +294,90 @@
 
 /* --------------------------------------------------------------------------
    Simulador de Dispositivo Móvil (Academic Defense Showcase)
-   Permite a los evaluadores alternar a vista de teléfono 390x844 con 1 clic en Desktop
+   Iframe sandbox de 390x844px para 100% de paridad con DevTools y móviles reales
    -------------------------------------------------------------------------- */
-.simulator-exit-banner {
+.device-simulator-overlay {
   display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background-color: rgba(5, 7, 10, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: 1.5rem 1rem;
+  overflow-y: auto;
 }
 
-@media (min-width: 860px) {
-  body.device-simulator-mode {
-    background-color: #07090C !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: flex-start !important;
-    min-height: 100vh;
-    padding: 3.5rem 1rem 2rem !important;
-    overflow-y: auto !important;
-  }
+.device-simulator-overlay.active {
+  display: flex;
+  animation: fadeIn 0.2s var(--ease-snappy);
+}
 
-  body.device-simulator-mode .simulator-exit-banner {
-    display: inline-flex;
-    position: fixed;
-    top: 0.75rem;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: rgba(30, 35, 45, 0.95);
-    color: #F8FAFC;
-    padding: 0.4rem 1rem;
-    border-radius: var(--radius-pill);
-    font-size: 0.8rem;
-    font-weight: 600;
-    z-index: 10000;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    cursor: pointer;
-    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(8px);
-    transition: all var(--transition-fast);
-  }
+.simulator-phone-frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  position: relative;
+  margin: auto;
+}
 
-  body.device-simulator-mode .simulator-exit-banner:hover {
-    background-color: #2D3748;
-    color: #FFFFFF;
-  }
+.simulator-exit-btn {
+  background-color: rgba(30, 35, 45, 0.95);
+  color: #F8FAFC;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  padding: 0.45rem 1.15rem;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-family-body);
+  font-size: 0.825rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  transition: all var(--transition-fast);
+}
 
-  body.device-simulator-mode .app-layout {
-    width: 390px !important;
-    max-width: 390px !important;
-    height: 844px !important;
-    max-height: 844px !important;
-    background-color: var(--bg-primary) !important;
-    border: 12px solid #1C212B !important;
-    border-radius: 48px !important;
-    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.85), 0 0 0 2px rgba(255, 255, 255, 0.08) !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    display: flex !important;
-    flex-direction: column !important;
-    position: relative !important;
-    margin: 0 auto !important;
-    flex: none !important;
-  }
+.simulator-exit-btn:hover {
+  background-color: #374151;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+}
 
-  /* En modo simulador, activar vista móvil */
-  body.device-simulator-mode .desktop-nav {
-    display: none !important;
-  }
+.simulator-screen-bezel {
+  width: 390px;
+  height: 844px;
+  background-color: #000000;
+  border: 12px solid #1E232D;
+  border-radius: 50px;
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 0 2px rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
 
-  body.device-simulator-mode #simulator-toggle {
-    display: none !important;
-  }
+.simulator-dynamic-island {
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 110px;
+  height: 26px;
+  background-color: #000000;
+  border-radius: 20px;
+  z-index: 100;
+  pointer-events: none;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.05);
+}
 
-  body.device-simulator-mode .mobile-bottom-nav {
-    display: flex !important;
-    position: sticky !important;
-    bottom: 0.75rem !important;
-    margin-top: auto !important;
-    width: calc(100% - 1.5rem) !important;
-    max-width: 350px !important;
-  }
-
-  body.device-simulator-mode .main-content {
-    padding-bottom: 2rem !important;
-  }
-
-  body.device-simulator-mode .view-grid-two-cols {
-    grid-template-columns: 1fr !important;
-  }
-
-  body.device-simulator-mode .ventas-workflow-grid {
-    grid-template-columns: 1fr !important;
-  }
+.simulator-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  background-color: var(--bg-primary);
 }

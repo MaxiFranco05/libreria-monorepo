@@ -318,40 +318,46 @@
 
     container.style.display = 'block';
     container.innerHTML = `
-      <div class="confirmed-sale-summary">
-        <h4 class="confirmed-sale-title">✓ Comprobante de Venta Emitido #${venta.id}</h4>
-        <p style="margin-bottom: 0.5rem;">
-          <strong>Fecha:</strong> ${formatDateTime(venta.fecha)} | 
+      <div class="confirmed-sale-summary" style="margin-top: 1.25rem; padding: 1.25rem; border: 1.5px solid var(--color-success); background-color: var(--color-success-bg); border-radius: var(--radius-md); box-sizing: border-box; width: 100%;">
+        <h4 style="color: var(--color-success); font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.4rem; font-size: 1.05rem;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+          Comprobante de Venta Emitido #${venta.id}
+        </h4>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.75rem; line-height: 1.4;">
+          <strong>Fecha:</strong> ${formatDateTime(venta.fecha)} &nbsp;|&nbsp;
           <strong>Cliente:</strong> ${escapeHtml(venta.cliente?.nombre || 'N/D')} (${escapeHtml(venta.cliente?.email || 'N/D')})
         </p>
-        <table class="table" style="background: var(--bg-surface); border-radius: var(--radius-sm); margin-top: 0.75rem; font-size: 0.9rem;">
-          <thead>
-            <tr>
-              <th>Libro</th>
-              <th>Precio Unitario</th>
-              <th>Cantidad</th>
-              <th>Subtotal</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${(venta.renglones || []).map((r) => `
+        <div class="table-responsive" style="border: 1px solid var(--border-color); border-radius: var(--radius-sm); overflow-x: auto; background: var(--bg-surface);">
+          <table class="table" style="background: var(--bg-surface); margin: 0; font-size: 0.85rem; width: 100%;">
+            <thead>
               <tr>
-                <td><strong>${escapeHtml(r.titulo)}</strong></td>
-                <td>${formatCurrency(r.precio_unitario)}</td>
-                <td>${r.cantidad} u.</td>
-                <td style="font-weight: 600;">${formatCurrency(r.subtotal)}</td>
+                <th>Libro</th>
+                <th style="text-align: right;">Unitario</th>
+                <th style="text-align: center;">Cantidad</th>
+                <th style="text-align: right;">Subtotal</th>
               </tr>
-            `).join('')}
-          </tbody>
-          <tfoot>
-            <tr style="background: var(--bg-surface-alt); font-weight: 700;">
-              <td colspan="3" style="text-align: right;">Total Facturado:</td>
-              <td style="color: var(--color-success); font-size: 1.15rem;">${formatCurrency(venta.total)}</td>
-            </tr>
-          </tfoot>
-        </table>
+            </thead>
+            <tbody>
+              ${(venta.renglones || []).map((r) => `
+                <tr>
+                  <td><strong>${escapeHtml(r.titulo)}</strong></td>
+                  <td style="text-align: right; font-family: var(--font-family-mono);">${formatCurrency(r.precio_unitario)}</td>
+                  <td style="text-align: center; font-family: var(--font-family-mono);">${r.cantidad} u.</td>
+                  <td style="text-align: right; font-family: var(--font-family-mono); font-weight: 600;">${formatCurrency(r.subtotal)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+            <tfoot>
+              <tr style="background: var(--bg-surface-alt); font-weight: 700;">
+                <td colspan="3" style="text-align: right;">Total Liquidado:</td>
+                <td style="text-align: right; color: var(--color-success); font-family: var(--font-family-mono); font-size: 1.1rem;">${formatCurrency(venta.total)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
       </div>
     `;
+    container.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   /**

@@ -510,10 +510,15 @@
 
 .table {
   width: 100%;
-  min-width: 680px; /* Previene el aplastamiento de columnas en resoluciones móviles */
   border-collapse: collapse;
-  font-size: 0.875rem;
+  font-size: 0.85rem;
   text-align: left;
+}
+
+@media (max-width: 859px) {
+  .table {
+    min-width: 620px; /* En móviles preserva ancho legible y permite swipe horizontal */
+  }
 }
 
 .isbn-code,
@@ -537,14 +542,25 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  padding: 0.65rem 0.85rem;
+  padding: 0.55rem 0.65rem;
   border-bottom: 1px solid var(--border-color);
 }
 
 .table td {
-  padding: 0.8rem 0.85rem;
+  padding: 0.6rem 0.65rem;
   border-bottom: 1px solid var(--border-color);
   color: var(--text-primary);
+}
+
+.btn-editar-libro {
+  border-color: var(--border-color);
+  color: var(--text-secondary);
+}
+
+.btn-editar-libro:hover {
+  border-color: var(--accent-primary);
+  color: var(--accent-primary);
+  background-color: var(--accent-soft);
 }
 
 .table tbody tr:hover {
