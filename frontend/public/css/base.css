@@ -1,24 +1,30 @@
 /* ==========================================================================
-   Base CSS - Reset, Variables y Tipografía Global
-   Estética Editorial Contemporánea con Modo Oscuro Accesible (WCAG AA)
+   Base CSS - Reset, Tokens y Tipografía Editorial Contemporánea
+   Librería Central — Filosofía Emil Kowalski & Anti-Slop (WCAG AA)
    ========================================================================== */
 
 :root {
-  /* Paleta cromática editorial clara */
-  --bg-primary: #F8F6F0;
+  /* Tipografía Editorial */
+  --font-family-serif: "Newsreader", "Charter", "Iowan Old Style", "Palatino", serif;
+  --font-family-body: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-family-mono: "JetBrains Mono", "SF Mono", Menlo, Consolas, monospace;
+
+  /* Modo Claro: Papel de Archivo & Tinta Editorial */
+  --bg-primary: #FBF9F5;
   --bg-surface: #FFFFFF;
-  --bg-surface-alt: #F1EFEA;
-  --bg-surface-hover: #ECEAE4;
-  --text-primary: #1E293B;
-  --text-secondary: #475569;
-  --text-muted: #64748B;
+  --bg-surface-alt: #F5F2EB;
+  --bg-surface-hover: #EFEBE4;
+  --bg-surface-elevated: #FFFFFF;
   
-  /* Acentos de identidad editorial (WCAG AA > 4.5:1 sobre blanco) */
-  --accent-primary: #C2410C;
-  --accent-primary-hover: #9A3412;
-  --accent-navy: #1E3A8A;
-  --accent-navy-hover: #172554;
-  --accent-soft: rgba(30, 58, 138, 0.08);
+  --text-primary: #18181B;
+  --text-secondary: #52525B;
+  --text-muted: #71717A;
+  
+  /* Acentos de identidad editorial (Terracota cálido de imprenta) */
+  --accent-primary: #9A3412;
+  --accent-primary-hover: #7C2D12;
+  --accent-soft: rgba(154, 52, 18, 0.1);
+  --accent-text: #7C2D12;
   
   /* Estados del sistema */
   --color-success: #15803D;
@@ -27,15 +33,19 @@
   --color-error-bg: #FEE2E2;
   --color-warning: #B45309;
   --color-warning-bg: #FEF3C7;
+
+  --color-badge-bg: #EFEBE4;
+  --color-badge-text: #44403C;
   
-  /* Bordes y sombras */
-  --border-color: #E2E8F0;
-  --border-subtle: #CBD5E1;
-  --border-focus: #1E3A8A;
-  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
-  --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.07), 0 2px 4px -2px rgba(15, 23, 42, 0.05);
-  --shadow-lg: 0 10px 15px -3px rgba(15, 23, 42, 0.08), 0 4px 6px -4px rgba(15, 23, 42, 0.04);
-  --shadow-xl: 0 20px 25px -5px rgba(15, 23, 42, 0.15), 0 8px 10px -6px rgba(15, 23, 42, 0.1);
+  /* Bordes y sombras artesanales */
+  --border-color: #E5E1D8;
+  --border-subtle: #EDE9E1;
+  --border-focus: #9A3412;
+  
+  --shadow-sm: 0 1px 2px rgba(24, 24, 27, 0.04);
+  --shadow-md: 0 4px 12px -2px rgba(24, 24, 27, 0.06), 0 2px 4px -2px rgba(24, 24, 27, 0.03);
+  --shadow-lg: 0 12px 32px -4px rgba(24, 24, 27, 0.08), 0 4px 12px -2px rgba(24, 24, 27, 0.04);
+  --shadow-modal: 0 24px 48px -12px rgba(24, 24, 27, 0.18), 0 0 0 1px rgba(24, 24, 27, 0.06);
   
   /* Radios de borde */
   --radius-sm: 6px;
@@ -43,55 +53,58 @@
   --radius-lg: 16px;
   --radius-pill: 9999px;
   
-  /* Tipografía */
-  --font-family-body: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-family-serif: "Georgia", "Cambria", "Times New Roman", Times, serif;
+  /* Física y tiempos de interacción (Emil Kowalski) */
+  --ease-snappy: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.2, 0, 0, 1);
+  --transition-fast: 120ms var(--ease-snappy);
+  --transition-normal: 200ms ease;
   --line-height-base: 1.55;
-  --line-height-tight: 1.25;
-  
-  /* Transiciones estándar */
-  --transition-fast: 150ms ease;
-  --transition-normal: 250ms ease;
+  --line-height-tight: 1.2;
 }
 
 /* --------------------------------------------------------------------------
-   Paleta Modo Oscuro (data-theme="dark")
+   Paleta Modo Oscuro (data-theme="dark") - Obsidiana Neutra & Ámbar Literario
    -------------------------------------------------------------------------- */
 [data-theme="dark"] {
-  --bg-primary: #0B0F17;
-  --bg-surface: #151D2A;
-  --bg-surface-alt: #1C2638;
-  --bg-surface-hover: #232F45;
-  --text-primary: #F8FAFC;
+  --bg-primary: #0C0E12;
+  --bg-surface: #14171E;
+  --bg-surface-alt: #1A1E26;
+  --bg-surface-hover: #1F242E;
+  --bg-surface-elevated: #181C24;
+  
+  --text-primary: #F4F4F5;
   --text-secondary: #CBD5E1;
   --text-muted: #94A3B8;
   
-  /* Acentos calibrados para alto contraste sobre fondos oscuros */
-  --accent-primary: #FB923C;
-  --accent-primary-hover: #F97316;
-  --accent-navy: #38BDF8;
-  --accent-navy-hover: #7DD3FC;
-  --accent-soft: rgba(56, 189, 248, 0.15);
+  /* Acento Ámbar de Lectura */
+  --accent-primary: #F59E0B;
+  --accent-primary-hover: #D97706;
+  --accent-soft: rgba(245, 158, 11, 0.14);
+  --accent-text: #FBBF24;
   
   /* Estados del sistema en modo oscuro */
-  --color-success: #4ADE80;
-  --color-success-bg: rgba(74, 222, 128, 0.12);
+  --color-success: #34D399;
+  --color-success-bg: rgba(52, 211, 153, 0.14);
   --color-error: #F87171;
-  --color-error-bg: rgba(248, 113, 113, 0.12);
+  --color-error-bg: rgba(248, 113, 113, 0.14);
   --color-warning: #FBBF24;
-  --color-warning-bg: rgba(251, 191, 36, 0.12);
+  --color-warning-bg: rgba(251, 191, 36, 0.14);
+
+  --color-badge-bg: #1E232D;
+  --color-badge-text: #CBD5E1;
   
   /* Bordes y sombras oscuras */
-  --border-color: #263348;
-  --border-subtle: #1C2638;
-  --border-focus: #38BDF8;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 4px 8px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 10px 20px rgba(0, 0, 0, 0.55);
-  --shadow-xl: 0 25px 50px rgba(0, 0, 0, 0.7);
+  --border-color: #252A34;
+  --border-subtle: #1C2028;
+  --border-focus: #F59E0B;
+  
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 14px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 12px 36px rgba(0, 0, 0, 0.6);
+  --shadow-modal: 0 24px 60px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
-/* Reset moderno y box-sizing global */
+/* Reset y caja */
 *,
 *::before,
 *::after {
@@ -108,7 +121,7 @@ html {
 
 body {
   font-family: var(--font-family-body);
-  font-size: 1rem;
+  font-size: 0.95rem;
   line-height: var(--line-height-base);
   color: var(--text-primary);
   background-color: var(--bg-primary);
@@ -117,20 +130,22 @@ body {
   flex-direction: column;
   overflow-x: hidden;
   transition: background-color var(--transition-normal), color var(--transition-normal);
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Tipografía de títulos */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-family-serif);
-  font-weight: 700;
+  font-weight: 600;
   line-height: var(--line-height-tight);
   color: var(--text-primary);
+  letter-spacing: -0.015em;
 }
 
-/* Personalización de scrollbar accesible */
+/* Personalización de scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
 }
 
 ::-webkit-scrollbar-track {
@@ -138,7 +153,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--border-subtle);
+  background: var(--border-color);
   border-radius: var(--radius-pill);
 }
 

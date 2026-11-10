@@ -52,25 +52,51 @@
 
     if (state === 'loading') {
       box.innerHTML = `
-        <div class="state-icon" aria-hidden="true">⏳</div>
+        <div class="state-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="12" y1="2" x2="12" y2="6"></line>
+            <line x1="12" y1="18" x2="12" y2="22"></line>
+            <line x1="4.93" y1="4.93" x2="7.76" y2="7.76"></line>
+            <line x1="16.24" y1="16.24" x2="19.07" y2="19.07"></line>
+            <line x1="2" y1="12" x2="6" y2="12"></line>
+            <line x1="18" y1="12" x2="22" y2="12"></line>
+            <line x1="4.93" y1="19.07" x2="7.76" y2="16.24"></line>
+            <line x1="16.24" y1="7.76" x2="19.07" y2="4.93"></line>
+          </svg>
+        </div>
         <div class="state-title">Cargando catálogo...</div>
-        <p class="state-message">Consultando ejemplares disponibles en la API.</p>
+        <p class="state-message">Consultando ejemplares disponibles en la base de datos.</p>
       `;
     } else if (state === 'empty') {
       box.innerHTML = `
-        <div class="state-icon" aria-hidden="true">📚</div>
+        <div class="state-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+          </svg>
+        </div>
         <div class="state-title">No hay libros registrados</div>
         <p class="state-message">La base de datos no contiene libros en este momento. Podés registrar uno nuevo en la sección Libros.</p>
       `;
     } else if (state === 'no-results') {
       box.innerHTML = `
-        <div class="state-icon" aria-hidden="true">🔍</div>
+        <div class="state-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="8"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+        </div>
         <div class="state-title">Sin coincidencias</div>
         <p class="state-message">No se encontraron libros que coincidan con <strong>"${escapeHtml(currentQuery)}"</strong>.</p>
       `;
     } else if (state === 'error') {
       box.innerHTML = `
-        <div class="state-icon" aria-hidden="true">⚠️</div>
+        <div class="state-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="8" x2="12" y2="12"></line>
+            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+          </svg>
+        </div>
         <div class="state-title">Error de conexión con la API</div>
         <p class="state-message">${escapeHtml(errorMessage || 'No se pudo conectar con el servidor.')}</p>
         <button type="button" class="btn btn-primary" id="btn-catalogo-retry">Reintentar</button>
@@ -104,10 +130,12 @@
   async function showBookDetail(bookId) {
     const modal = document.getElementById('modal-libro-detalle');
     const modalTitle = document.getElementById('modal-libro-titulo');
+    const modalPills = document.getElementById('modal-libro-pills');
     const modalBody = document.getElementById('modal-libro-contenido');
     if (!modal || !modalBody) return;
 
     modalTitle.textContent = 'Cargando información...';
+    if (modalPills) modalPills.innerHTML = '';
     modalBody.innerHTML = `
       <div style="text-align: center; padding: 2rem;">
         <p style="color: var(--text-secondary);">Cargando información editorial y autorías...</p>
@@ -134,28 +162,50 @@
         ? book.genero.nombre
         : 'Sin clasificar';
 
+      if (modalPills) {
+        modalPills.innerHTML = `
+          <span class="meta-pill isbn-pill">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+            </svg>
+            ISBN ${escapeHtml(book.isbn)}
+          </span>
+          <span class="meta-pill">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+              <path d="M3 9h18"></path>
+            </svg>
+            ${escapeHtml(editorialName)}
+          </span>
+          <span class="meta-pill stock-pill-modal">
+            <span class="stock-dot"></span>
+            ${book.stock !== undefined ? book.stock : 0} ejemplares en depósito
+          </span>
+        `;
+      }
+
       const autorias = Array.isArray(book.autorias) ? book.autorias : [];
       let autoresHtml = '';
       if (autorias.length === 0) {
-        autoresHtml = '<p class="text-muted" style="font-style: italic;">Sin autores asociados a esta obra.</p>';
+        autoresHtml = '<p class="text-muted" style="font-style: italic; padding: 0.5rem 0;">Sin autores asociados a esta obra.</p>';
       } else {
         autoresHtml = `
-          <table class="table" style="margin-top: 0.5rem; font-size: 0.9rem;">
+          <table class="table" style="margin-top: 0.5rem; font-size: 0.85rem;">
             <thead>
               <tr>
-                <th scope="col">Orden</th>
-                <th scope="col">Autor</th>
+                <th scope="col" style="width: 48px;">Orden</th>
+                <th scope="col">Autor / Creador</th>
                 <th scope="col">Rol</th>
-                <th scope="col">Nacionalidad</th>
+                <th scope="col" style="text-align: right;">Nacionalidad</th>
               </tr>
             </thead>
             <tbody>
               ${autorias.map((a) => `
                 <tr>
-                  <td><strong>#${a.orden ?? 1}</strong></td>
-                  <td>${escapeHtml(a.autor ? a.autor.nombre : 'Autor desconocido')}</td>
-                  <td><span class="badge">${escapeHtml(a.rol || 'autor')}</span></td>
-                  <td>${escapeHtml(a.autor ? (a.autor.nacionalidad || 'N/D') : 'N/D')}</td>
+                  <td style="font-family: var(--font-family-mono); font-weight: 600; color: var(--text-muted);">#${a.orden ?? 1}</td>
+                  <td style="font-weight: 600;">${escapeHtml(a.autor ? a.autor.nombre : 'Autor desconocido')}</td>
+                  <td><span class="role-badge">${escapeHtml(a.rol || 'autor')}</span></td>
+                  <td style="text-align: right;"><span class="country-pill">${escapeHtml(a.autor ? (a.autor.nacionalidad || 'N/D') : 'N/D')}</span></td>
                 </tr>
               `).join('')}
             </tbody>
@@ -164,30 +214,25 @@
       }
 
       modalBody.innerHTML = `
-        <div style="display: flex; flex-direction: column; gap: 0.85rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.85rem;">
+        <div style="display: flex; flex-direction: column; gap: 1rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 0.75rem;">
             <div>
-              <span class="badge ${generoName === 'Sin clasificar' ? 'badge-navy' : ''}">${escapeHtml(generoName)}</span>
-              <span style="margin-left: 0.5rem; font-size: 0.85rem; color: var(--text-muted);">ISBN: <strong>${escapeHtml(book.isbn)}</strong></span>
+              <span class="genre-tag">${escapeHtml(generoName)}</span>
             </div>
-            <div style="font-size: 1.35rem; font-weight: 700; color: var(--accent-navy);">
+            <div style="font-family: var(--font-family-mono); font-size: 1.35rem; font-weight: 700; color: var(--text-primary);">
               ${formatCurrency(book.precio)}
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 0.25rem;">
-            <div><strong style="color: var(--text-secondary);">Editorial:</strong> ${escapeHtml(editorialName)}</div>
-            <div><strong style="color: var(--text-secondary);">Disponibilidad:</strong> ${book.stock !== undefined ? book.stock : 'N/D'} ejemplares</div>
-          </div>
-
-          <div style="margin-top: 0.75rem;">
-            <h4 style="margin-bottom: 0.5rem; font-size: 1.05rem; color: var(--accent-navy);">Equipo Editorial y Autorías:</h4>
+          <div>
+            <div class="editorial-section-title">Equipo Editorial y Créditos Acreditados</div>
             ${autoresHtml}
           </div>
         </div>
       `;
     } catch (err) {
       modalTitle.textContent = 'Error';
+      if (modalPills) modalPills.innerHTML = '';
       modalBody.innerHTML = `
         <div class="state-box state-error" style="margin: 0;">
           <p>No se pudo cargar el detalle del libro: ${escapeHtml(err.message)}</p>
@@ -197,7 +242,7 @@
   }
 
   /**
-   * Crea el elemento tarjeta para un libro del catálogo
+   * Crea el elemento tarjeta para un libro del catálogo con diseño editorial artesanal
    * @param {Object} book - Libro retornado por GET /libros/
    * @param {Object} helpers - Diccionarios y utilidades
    * @returns {HTMLElement}
@@ -207,105 +252,52 @@
     card.className = 'book-card';
     card.setAttribute('aria-labelledby', `book-title-${book.id}`);
 
-    const header = document.createElement('header');
-    header.className = 'book-card-header';
-
-    const badges = document.createElement('div');
-    badges.className = 'book-card-badges';
-
-    const genreBadge = document.createElement('span');
     const generoId = book.genero_id !== undefined ? book.genero_id : book.generoId;
     const generoName = formatters.getGeneroName ? formatters.getGeneroName(generoId, generos) : 'Sin clasificar';
-    genreBadge.className = 'badge';
-    if (generoName === 'Sin clasificar') {
-      genreBadge.classList.add('badge-navy');
-    }
-    genreBadge.textContent = generoName;
-    badges.appendChild(genreBadge);
-    header.appendChild(badges);
-
-    const title = document.createElement('h3');
-    title.className = 'book-card-title';
-    title.id = `book-title-${book.id}`;
-    title.textContent = book.titulo || 'Sin título';
-    header.appendChild(title);
-    card.appendChild(header);
-
-    const body = document.createElement('div');
-    body.className = 'book-card-body';
-
-    // Editorial
-    const edItem = document.createElement('div');
-    edItem.className = 'book-meta-item';
-    const edLabel = document.createElement('span');
-    edLabel.className = 'book-meta-label';
-    edLabel.textContent = 'Editorial:';
-    const edVal = document.createElement('span');
-    edVal.className = 'book-meta-value';
     const editorialId = book.editorial_id !== undefined ? book.editorial_id : book.editorialId;
-    edVal.textContent = formatters.getEditorialName ? formatters.getEditorialName(editorialId, editoriales) : 'Editorial';
-    edItem.appendChild(edLabel);
-    edItem.appendChild(edVal);
-    body.appendChild(edItem);
-
-    // ISBN
-    const isbnItem = document.createElement('div');
-    isbnItem.className = 'book-meta-item';
-    const isbnLabel = document.createElement('span');
-    isbnLabel.className = 'book-meta-label';
-    isbnLabel.textContent = 'ISBN:';
-    const isbnVal = document.createElement('span');
-    isbnVal.className = 'book-meta-value';
-    isbnVal.textContent = book.isbn || 'N/D';
-    isbnItem.appendChild(isbnLabel);
-    isbnItem.appendChild(isbnVal);
-    body.appendChild(isbnItem);
-
-    // Stock
-    const stockItem = document.createElement('div');
-    stockItem.className = 'book-meta-item';
-    const stockLabel = document.createElement('span');
-    stockLabel.className = 'book-meta-label';
-    stockLabel.textContent = 'Stock:';
-    const stockVal = document.createElement('span');
-    stockVal.className = 'book-meta-value';
-    stockVal.textContent = `${book.stock !== undefined ? book.stock : 0} u.`;
-    stockItem.appendChild(stockLabel);
-    stockItem.appendChild(stockVal);
-    body.appendChild(stockItem);
-
-    card.appendChild(body);
-
-    // Footer con precio y botón de ver autores
-    const footer = document.createElement('footer');
-    footer.className = 'book-card-footer';
-    footer.style.display = 'flex';
-    footer.style.justifyContent = 'space-between';
-    footer.style.alignItems = 'center';
-    footer.style.marginTop = '1rem';
-    footer.style.paddingTop = '0.75rem';
-    footer.style.borderTop = '1px solid var(--border-color)';
-
-    const price = document.createElement('span');
-    price.className = 'book-price';
-    price.style.fontSize = '1.2rem';
-    price.style.fontWeight = '700';
-    price.style.color = 'var(--accent-navy)';
+    const editorialName = formatters.getEditorialName ? formatters.getEditorialName(editorialId, editoriales) : 'Editorial Planeta';
     const formatCurrency = formatters.formatCurrency || ((v) => `$${Number(v).toFixed(2)}`);
-    price.textContent = formatCurrency(book.precio);
-    footer.appendChild(price);
 
-    const detailBtn = document.createElement('button');
-    detailBtn.type = 'button';
-    detailBtn.className = 'btn btn-secondary btn-pagination';
-    detailBtn.textContent = 'Ver Autores';
-    detailBtn.setAttribute('aria-label', `Ver autores y detalle de ${book.titulo}`);
-    detailBtn.addEventListener('click', () => {
-      showBookDetail(book.id);
-    });
-    footer.appendChild(detailBtn);
+    card.innerHTML = `
+      <div>
+        <div class="book-card-header">
+          <span class="genre-tag">${escapeHtml(generoName)}</span>
+          <span class="book-card-price">${formatCurrency(book.precio)}</span>
+        </div>
+        <div class="book-card-main" style="margin-top: 0.85rem;">
+          <h3 class="book-card-title" id="book-title-${book.id}">${escapeHtml(book.titulo || 'Sin título')}</h3>
+          <p class="book-card-editorial">${escapeHtml(editorialName)}</p>
+        </div>
+      </div>
 
-    card.appendChild(footer);
+      <div class="book-card-meta">
+        <div class="book-card-meta-item">
+          <span class="book-card-meta-label">Editorial</span>
+          <span class="book-card-meta-val">${escapeHtml(editorialName)}</span>
+        </div>
+        <div class="book-card-meta-item">
+          <span class="book-card-meta-label">ISBN</span>
+          <span class="book-card-meta-val" style="font-family: var(--font-family-mono); font-size: 0.75rem;">${escapeHtml(book.isbn || 'N/D')}</span>
+        </div>
+      </div>
+
+      <div class="book-card-footer">
+        <span class="stock-pill">
+          <span class="stock-dot"></span> ${book.stock !== undefined ? book.stock : 0} ejemplares
+        </span>
+        <button type="button" class="btn btn-secondary btn-sm" aria-label="Ver autores y detalle de ${escapeHtml(book.titulo)}">
+          Ver Autores
+        </button>
+      </div>
+    `;
+
+    const detailBtn = card.querySelector('button');
+    if (detailBtn) {
+      detailBtn.addEventListener('click', () => {
+        showBookDetail(book.id);
+      });
+    }
+
     return card;
   }
 

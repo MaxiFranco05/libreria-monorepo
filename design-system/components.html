@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="es" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mockup — Librería Central (Rediseño Editorial)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="tokens.css">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      max-width: 100%;
+      overflow-x: hidden;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--color-canvas);
+      color: var(--color-text-primary);
+      line-height: 1.5;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: background-color var(--duration-normal) ease, color var(--duration-normal) ease;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 5.5rem; /* Espacio para navbar flotante móvil */
+    }
+
+    @media (min-width: 768px) {
+      body {
+        padding-bottom: 2rem;
+      }
+    }
+
+    /* ------------------------------------------------------------------------
+       Banner de Notificación del Mockup
+       ------------------------------------------------------------------------ */
+    .mockup-banner {
+      background-color: var(--color-accent-surface);
+      border-bottom: 1px solid var(--color-border);
+      padding: 0.6rem 1rem;
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--color-accent-text);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .mockup-banner strong {
+      font-weight: 700;
+    }
+
+    .mockup-demo-actions {
+      display: inline-flex;
+      gap: 0.5rem;
+    }
+
+    /* ------------------------------------------------------------------------
+       Header Flotante Redondeado (Estilo Moderno Isleño)
+       ------------------------------------------------------------------------ */
+    .header-wrapper {
+      position: sticky;
+      top: 0.75rem;
+      z-index: 40;
+      padding: 0 1rem;
+      width: 100%;
+      max-width: 1180px;
+      margin: 0 auto;
+    }
+
+    .app-header {
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-full);
+      padding: 0.6rem 1.25rem;
+      box-shadow: var(--shadow-md);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      transition: background-color var(--duration-normal) ease, border-color var(--duration-normal) ease;
+    }
+
+    .brand-block {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: inherit;
+      flex-shrink: 0;
+    }
+
+    .brand-mark {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--color-accent), #7C2D12);
+      color: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: var(--shadow-sm);
+      flex-shrink: 0;
+    }
+
+    [data-theme="dark"] .brand-mark {
+      background: linear-gradient(135deg, var(--color-accent), #B45309);
+      color: #0C0E12;
+    }
+
+    .brand-mark svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .brand-meta h1 {
+      font-family: var(--font-serif);
+      font-size: 1.15rem;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      line-height: 1.15;
+    }
+
+    .brand-meta p {
+      font-size: 0.7rem;
+      color: var(--color-text-muted);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+
+    /* Navegación Desktop */
+    .desktop-nav {
+      display: none;
+    }
+
+    @media (min-width: 860px) {
+      .desktop-nav {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        list-style: none;
+        background-color: var(--color-surface-subtle);
+        padding: 0.25rem;
+        border-radius: var(--radius-full);
+        border: 1px solid var(--color-border-subtle);
+      }
+
+      .desktop-nav .nav-link {
+        padding: 0.4rem 0.9rem;
+        border-radius: var(--radius-full);
+        color: var(--color-text-secondary);
+        text-decoration: none;
+        font-size: 0.85rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        transition: all var(--duration-fast) var(--ease-snappy);
+      }
+
+      .desktop-nav .nav-link svg {
+        width: 15px;
+        height: 15px;
+      }
+
+      .desktop-nav .nav-link:hover {
+        color: var(--color-text-primary);
+      }
+
+      .desktop-nav .nav-link.active {
+        background-color: var(--color-surface);
+        color: var(--color-accent);
+        font-weight: 600;
+        box-shadow: var(--shadow-sm);
+      }
+    }
+
+    /* ------------------------------------------------------------------------
+       Switch Animado de Modo Oscuro / Claro (Cero Emojis)
+       ------------------------------------------------------------------------ */
+    .theme-switch-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-shrink: 0;
+    }
+
+    .theme-switch {
+      position: relative;
+      width: 58px;
+      height: 30px;
+      border-radius: var(--radius-full);
+      background-color: var(--color-surface-subtle);
+      border: 1px solid var(--color-border);
+      cursor: pointer;
+      outline: none;
+      padding: 2px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background-color var(--duration-normal) ease, border-color var(--duration-normal) ease;
+    }
+
+    .theme-switch:focus-visible {
+      box-shadow: 0 0 0 2px var(--color-accent);
+    }
+
+    .theme-switch-icon {
+      width: 14px;
+      height: 14px;
+      color: var(--color-text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1;
+      transition: color var(--duration-normal) ease;
+    }
+
+    .theme-switch-icon.sun {
+      margin-left: 6px;
+    }
+
+    .theme-switch-icon.moon {
+      margin-right: 6px;
+    }
+
+    .theme-switch-thumb {
+      position: absolute;
+      left: 3px;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background-color: var(--color-accent);
+      color: #FFFFFF;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 220ms var(--ease-snappy), background-color var(--duration-normal) ease, width 140ms ease;
+    }
+
+    .theme-switch-thumb svg {
+      width: 13px;
+      height: 13px;
+    }
+
+    .theme-switch:active .theme-switch-thumb {
+      width: 28px;
+    }
+
+    [data-theme="dark"] .theme-switch-thumb {
+      transform: translateX(26px);
+      color: #0C0E12;
+    }
+
+    [data-theme="dark"] .theme-switch:active .theme-switch-thumb {
+      transform: translateX(22px);
+    }
+
+    /* ------------------------------------------------------------------------
+       Navbar Inferior Flotante en Móviles (Dock Redondeado)
+       ------------------------------------------------------------------------ */
+    .mobile-bottom-nav {
+      position: fixed;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      width: calc(100% - 1.5rem);
+      max-width: 420px;
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-full);
+      padding: 0.4rem 0.6rem;
+      box-shadow: var(--shadow-lg);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      list-style: none;
+      transition: background-color var(--duration-normal) ease, border-color var(--duration-normal) ease;
+    }
+
+    @media (min-width: 860px) {
+      .mobile-bottom-nav {
+        display: none;
+      }
+    }
+
+    .mobile-nav-link {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.15rem;
+      padding: 0.4rem 0.65rem;
+      border-radius: var(--radius-full);
+      color: var(--color-text-secondary);
+      text-decoration: none;
+      font-size: 0.675rem;
+      font-weight: 500;
+      transition: all var(--duration-fast) var(--ease-snappy);
+    }
+
+    .mobile-nav-link svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .mobile-nav-link:active {
+      transform: scale(0.92);
+    }
+
+    .mobile-nav-link.active {
+      background-color: var(--color-accent-surface);
+      color: var(--color-accent);
+      font-weight: 600;
+    }
+
+    /* ------------------------------------------------------------------------
+       Contenedor Principal
+       ------------------------------------------------------------------------ */
+    .main-layout {
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 2rem 1rem 3rem;
+      width: 100%;
+      flex: 1;
+    }
+
+    /* ------------------------------------------------------------------------
+       Encabezado de Sección Editorial
+       ------------------------------------------------------------------------ */
+    .editorial-hero {
+      margin-bottom: 1.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .hero-pretitle {
+      font-size: 0.775rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--color-accent);
+      font-weight: 600;
+    }
+
+    .hero-title {
+      font-family: var(--font-serif);
+      font-size: clamp(1.6rem, 4vw, 2.25rem);
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      line-height: 1.15;
+    }
+
+    .hero-description {
+      color: var(--color-text-muted);
+      font-size: 0.925rem;
+      max-width: 62ch;
+    }
+
+    /* ------------------------------------------------------------------------
+       Barra de Búsqueda y Filtros
+       ------------------------------------------------------------------------ */
+    .search-panel {
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 0.85rem 1rem;
+      margin-bottom: 2rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .search-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      background-color: var(--color-surface-subtle);
+      border: 1px solid var(--color-border-subtle);
+      border-radius: var(--radius-sm);
+      padding: 0.55rem 0.85rem;
+      flex: 1;
+      min-width: 240px;
+      transition: border-color var(--duration-fast) ease, box-shadow var(--duration-fast) ease;
+    }
+
+    .search-input-wrap:focus-within {
+      border-color: var(--color-accent);
+      box-shadow: 0 0 0 3px var(--color-accent-surface);
+    }
+
+    .search-input-wrap svg {
+      width: 17px;
+      height: 17px;
+      color: var(--color-text-muted);
+      flex-shrink: 0;
+    }
+
+    .search-input {
+      border: none;
+      background: transparent;
+      outline: none;
+      font-family: var(--font-sans);
+      font-size: 0.875rem;
+      color: var(--color-text-primary);
+      width: 100%;
+    }
+
+    .search-input::placeholder {
+      color: var(--color-text-muted);
+    }
+
+    .results-count {
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+      white-space: nowrap;
+      font-weight: 500;
+    }
+
+    /* ------------------------------------------------------------------------
+       Cuadrícula del Catálogo (Cards Artesanales)
+       ------------------------------------------------------------------------ */
+    .catalog-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 1.25rem;
+    }
+
+    @media (min-width: 640px) {
+      .catalog-grid {
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+      }
+    }
+
+    .book-card {
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 1.25rem;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 1.25rem;
+      position: relative;
+      transition: transform var(--duration-normal) var(--ease-snappy),
+                  box-shadow var(--duration-normal) var(--ease-snappy),
+                  border-color var(--duration-normal) ease;
+    }
+
+    .book-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--color-border);
+    }
+
+    .book-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 0.75rem;
+    }
+
+    .genre-tag {
+      font-size: 0.725rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      padding: 0.2rem 0.55rem;
+      border-radius: var(--radius-sm);
+      background-color: var(--color-badge-bg);
+      color: var(--color-badge-text);
+    }
+
+    .price-tag {
+      font-family: var(--font-mono);
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    .book-main {
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .book-title {
+      font-family: var(--font-serif);
+      font-size: 1.25rem;
+      font-weight: 600;
+      line-height: 1.25;
+      color: var(--color-text-primary);
+      letter-spacing: -0.01em;
+    }
+
+    .book-author-lead {
+      font-size: 0.85rem;
+      color: var(--color-text-secondary);
+      font-weight: 500;
+    }
+
+    .book-meta-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.5rem;
+      padding-top: 0.75rem;
+      border-top: 1px solid var(--color-border-subtle);
+      font-size: 0.8rem;
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .meta-label {
+      color: var(--color-text-muted);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .meta-value {
+      font-weight: 500;
+      color: var(--color-text-primary);
+      font-size: 0.825rem;
+    }
+
+    .meta-isbn {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+    }
+
+    .stock-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--color-success);
+    }
+
+    .stock-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background-color: currentColor;
+    }
+
+    .book-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      margin-top: auto;
+    }
+
+    /* ------------------------------------------------------------------------
+       Botones Táctiles
+       ------------------------------------------------------------------------ */
+    .btn {
+      font-family: var(--font-sans);
+      font-size: 0.825rem;
+      font-weight: 600;
+      padding: 0.5rem 0.9rem;
+      border-radius: var(--radius-sm);
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.4rem;
+      transition: transform var(--duration-fast) var(--ease-snappy),
+                  background-color var(--duration-fast) ease,
+                  box-shadow var(--duration-fast) ease;
+      text-decoration: none;
+      outline: none;
+    }
+
+    .btn:active {
+      transform: scale(0.97);
+    }
+
+    .btn-primary {
+      background-color: var(--color-accent);
+      color: #FFFFFF;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.08);
+    }
+
+    [data-theme="dark"] .btn-primary {
+      color: #0C0E12;
+    }
+
+    .btn-primary:hover {
+      background-color: var(--color-accent-hover);
+    }
+
+    .btn-secondary {
+      background-color: var(--color-surface);
+      color: var(--color-text-primary);
+      border-color: var(--color-border);
+    }
+
+    .btn-secondary:hover {
+      background-color: var(--color-surface-subtle);
+      border-color: var(--color-border);
+    }
+
+    .btn-ghost {
+      background: none;
+      border: none;
+      color: var(--color-text-secondary);
+      padding: 0.45rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .btn-ghost:hover {
+      background-color: var(--color-surface-subtle);
+      color: var(--color-text-primary);
+    }
+
+    /* ------------------------------------------------------------------------
+       Modales Nativos (<dialog>) - Chips Atómicos para Subtítulos
+       ------------------------------------------------------------------------ */
+    dialog.app-modal:not([open]) {
+      display: none !important;
+    }
+
+    dialog.app-modal[open] {
+      position: fixed !important;
+      inset: 0 !important;
+      margin: auto !important;
+      max-width: 580px;
+      width: min(92vw, 580px);
+      max-height: 85vh;
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 0;
+      background-color: var(--color-surface-elevated);
+      color: var(--color-text-primary);
+      box-shadow: var(--shadow-modal);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      z-index: 1000;
+      animation: modalEntrance var(--duration-normal) var(--ease-snappy);
+    }
+
+    @keyframes modalEntrance {
+      from {
+        opacity: 0;
+        transform: scale(0.96) translateY(8px);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+      }
+    }
+
+    dialog.app-modal::backdrop {
+      background-color: rgba(12, 14, 18, 0.65);
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+    }
+
+    .modal-head {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      background-color: var(--color-surface-subtle);
+    }
+
+    .modal-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.45rem;
+      flex: 1;
+    }
+
+    .modal-head h3 {
+      font-family: var(--font-serif);
+      font-size: 1.4rem;
+      font-weight: 600;
+      line-height: 1.2;
+    }
+
+    /* Chips Atómicos de Metadatos (Evitan cortes de oraciones incómodos) */
+    .modal-meta-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      align-items: center;
+    }
+
+    .meta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 0.2rem 0.55rem;
+      border-radius: var(--radius-full);
+      background-color: var(--color-surface);
+      border: 1px solid var(--color-border);
+      color: var(--color-text-secondary);
+      white-space: nowrap;
+    }
+
+    .meta-pill svg {
+      width: 12px;
+      height: 12px;
+      color: var(--color-text-muted);
+    }
+
+    .meta-pill.isbn-pill {
+      font-family: var(--font-mono);
+      font-size: 0.725rem;
+    }
+
+    .meta-pill.stock-pill-modal {
+      color: var(--color-success);
+      background-color: var(--color-success-bg);
+      border-color: transparent;
+      font-weight: 600;
+    }
+
+    .modal-body {
+      padding: 1.5rem;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .editorial-section-title {
+      font-size: 0.775rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--color-text-muted);
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .editorial-section-title::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background-color: var(--color-border-subtle);
+    }
+
+    .author-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+
+    .author-table th {
+      text-align: left;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--color-text-muted);
+      padding: 0.5rem 0.65rem;
+      border-bottom: 1px solid var(--color-border);
+      font-weight: 600;
+    }
+
+    .author-table td {
+      padding: 0.7rem 0.65rem;
+      border-bottom: 1px solid var(--color-border-subtle);
+    }
+
+    .author-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .role-badge {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.725rem;
+      font-weight: 600;
+      padding: 0.15rem 0.5rem;
+      border-radius: var(--radius-sm);
+      background-color: var(--color-accent-surface);
+      color: var(--color-accent-text);
+    }
+
+    .country-pill {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.725rem;
+      padding: 0.15rem 0.5rem;
+      border-radius: var(--radius-sm);
+      background-color: var(--color-badge-bg);
+      color: var(--color-badge-text);
+    }
+
+    .modal-footer {
+      padding: 0.85rem 1.5rem;
+      border-top: 1px solid var(--color-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background-color: var(--color-surface-subtle);
+    }
+
+    .modal-tip {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+    }
+
+    .modal-tip kbd {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: 4px;
+      padding: 0.1rem 0.35rem;
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Barra Superior de Notificación del Mockup -->
+  <aside class="mockup-banner">
+    <div>
+      <strong>Previsualización de Identidad Editorial</strong> — Navbar redondeada, chips atómicos y switch animado.
+    </div>
+    <div class="mockup-demo-actions">
+      <button class="btn btn-secondary" style="padding: 0.25rem 0.6rem; font-size: 0.725rem;" onclick="openAuthorModal('Rayuela', '978-950-12-3456-8', 'Editorial Planeta', 10, [{orden: 1, autor: 'Julio Cortázar', rol: 'Autor principal', pais: 'Argentina'}, {orden: 2, autor: 'Jorge Luis Borges', rol: 'Coautor', pais: 'Argentina'}])">
+        Probar Modal Autores
+      </button>
+      <button class="btn btn-secondary" style="padding: 0.25rem 0.6rem; font-size: 0.725rem;" onclick="openSaleModal('Venta #1', '10/11/2026', 'Juan Pérez', '$145.00', [{libro: 'Rayuela', cant: 2, subtotal: '$110.00'}, {libro: 'El Aleph', cant: 1, subtotal: '$45.00'}])">
+        Probar Comprobante
+      </button>
+    </div>
+  </aside>
+
+  <!-- Header Flotante Isleño (Redondeado) -->
+  <div class="header-wrapper">
+    <header class="app-header">
+      <a href="#catalogo" class="brand-block">
+        <div class="brand-mark">
+          <!-- Lucide BookOpen SVG -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+          </svg>
+        </div>
+        <div class="brand-meta">
+          <h1 data-brand-name>Librería Central</h1>
+          <p data-brand-tagline>Fondo Editorial & Ventas</p>
+        </div>
+      </a>
+
+      <!-- Navegación Desktop Redondeada -->
+      <nav class="desktop-nav" aria-label="Navegación principal">
+        <a href="#catalogo" class="nav-link active">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="7" height="7" x="3" y="3" rx="1"></rect>
+            <rect width="7" height="7" x="14" y="3" rx="1"></rect>
+            <rect width="7" height="7" x="14" y="14" rx="1"></rect>
+            <rect width="7" height="7" x="3" y="14" rx="1"></rect>
+          </svg>
+          Catálogo
+        </a>
+        <a href="#libros" class="nav-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+          </svg>
+          Libros
+        </a>
+        <a href="#clientes" class="nav-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          Clientes
+        </a>
+        <a href="#ventas" class="nav-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="8" cy="21" r="1"></circle>
+            <circle cx="19" cy="21" r="1"></circle>
+            <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+          </svg>
+          Ventas
+        </a>
+        <a href="#historial" class="nav-link">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+            <path d="M3 3v5h5"></path>
+            <path d="M12 7v5l4 2"></path>
+          </svg>
+          Historial
+        </a>
+      </nav>
+
+      <!-- Switch Animado de Tema (Lucide Sun/Moon) -->
+      <div class="theme-switch-container">
+        <button class="theme-switch" id="themeSwitch" role="switch" aria-checked="false" onclick="toggleTheme()" aria-label="Cambiar tema claro u oscuro">
+          <span class="theme-switch-icon sun" aria-hidden="true">
+            <!-- Sun -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path d="M12 2v2"></path>
+              <path d="M12 20v2"></path>
+              <path d="m4.93 4.93 1.41 1.41"></path>
+              <path d="m17.66 17.66 1.41 1.41"></path>
+              <path d="M2 12h2"></path>
+              <path d="M20 12h2"></path>
+              <path d="m6.34 17.66-1.41 1.41"></path>
+              <path d="m19.07 4.93-1.41 1.41"></path>
+            </svg>
+          </span>
+          <span class="theme-switch-icon moon" aria-hidden="true">
+            <!-- Moon -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+            </svg>
+          </span>
+          <span class="theme-switch-thumb" id="switchThumb">
+            <!-- Lucide Dynamic Icon -->
+            <svg id="thumbIcon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="4"></circle>
+              <path d="M12 2v2"></path>
+              <path d="M12 20v2"></path>
+              <path d="m4.93 4.93 1.41 1.41"></path>
+              <path d="m17.66 17.66 1.41 1.41"></path>
+              <path d="M2 12h2"></path>
+              <path d="M20 12h2"></path>
+            </svg>
+          </span>
+        </button>
+      </div>
+    </header>
+  </div>
+
+  <!-- Contenido Principal: Catálogo Editorial -->
+  <main class="main-layout">
+    <section class="editorial-hero">
+      <span class="hero-pretitle">Catálogo de Obras & Existencias</span>
+      <h2 class="hero-title">Fondo Editorial Disponible</h2>
+      <p class="hero-description">
+        Exploración de ejemplares en depósito, consulta de autorías acreditadas e inventario sincronizado con PostgreSQL.
+      </p>
+    </section>
+
+    <!-- Barra de Búsqueda -->
+    <div class="search-panel">
+      <div class="search-input-wrap">
+        <!-- Lucide Search SVG -->
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input type="text" id="searchInput" class="search-input" placeholder="Buscar por título, autor o ISBN..." oninput="filterBooks(this.value)">
+      </div>
+      <span class="results-count" id="resultsCount">5 obras registradas en base de datos</span>
+    </div>
+
+    <!-- Grilla de Libros (Datos Inyectados por Seed) -->
+    <div class="catalog-grid" id="booksGrid">
+      
+      <!-- Libro 1: El Aleph -->
+      <article class="book-card" data-title="El Aleph" data-author="Jorge Luis Borges">
+        <div>
+          <div class="book-header">
+            <span class="genre-tag">Ficción</span>
+            <span class="price-tag">$45.00</span>
+          </div>
+          <div class="book-main" style="margin-top: 0.85rem;">
+            <h3 class="book-title">El Aleph</h3>
+            <p class="book-author-lead">Jorge Luis Borges</p>
+          </div>
+        </div>
+
+        <div class="book-meta-grid">
+          <div class="meta-item">
+            <span class="meta-label">Editorial</span>
+            <span class="meta-value">Editorial Planeta</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">ISBN</span>
+            <span class="meta-value meta-isbn">978-950-12-3456-7</span>
+          </div>
+        </div>
+
+        <div class="book-footer">
+          <span class="stock-pill">
+            <span class="stock-dot"></span> 15 ejemplares
+          </span>
+          <button class="btn btn-secondary" onclick="openAuthorModal('El Aleph', '978-950-12-3456-7', 'Editorial Planeta', 15, [{orden: 1, autor: 'Jorge Luis Borges', rol: 'Autor principal', pais: 'Argentina'}])">
+            Ver Autores
+          </button>
+        </div>
+      </article>
+
+      <!-- Libro 2: Rayuela -->
+      <article class="book-card" data-title="Rayuela" data-author="Julio Cortázar">
+        <div>
+          <div class="book-header">
+            <span class="genre-tag">Ficción</span>
+            <span class="price-tag">$55.00</span>
+          </div>
+          <div class="book-main" style="margin-top: 0.85rem;">
+            <h3 class="book-title">Rayuela</h3>
+            <p class="book-author-lead">Julio Cortázar <span style="font-size: 0.75rem; color: var(--color-text-muted);">(con coautoría)</span></p>
+          </div>
+        </div>
+
+        <div class="book-meta-grid">
+          <div class="meta-item">
+            <span class="meta-label">Editorial</span>
+            <span class="meta-value">Editorial Planeta</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">ISBN</span>
+            <span class="meta-value meta-isbn">978-950-12-3456-8</span>
+          </div>
+        </div>
+
+        <div class="book-footer">
+          <span class="stock-pill">
+            <span class="stock-dot"></span> 10 ejemplares
+          </span>
+          <button class="btn btn-secondary" onclick="openAuthorModal('Rayuela', '978-950-12-3456-8', 'Editorial Planeta', 10, [{orden: 1, autor: 'Julio Cortázar', rol: 'Autor principal', pais: 'Argentina'}, {orden: 2, autor: 'Jorge Luis Borges', rol: 'Coautor', pais: 'Argentina'}])">
+            Ver Autores
+          </button>
+        </div>
+      </article>
+
+      <!-- Libro 3: La casa de los espíritus -->
+      <article class="book-card" data-title="La casa de los espíritus" data-author="Isabel Allende">
+        <div>
+          <div class="book-header">
+            <span class="genre-tag">Ficción</span>
+            <span class="price-tag">$38.50</span>
+          </div>
+          <div class="book-main" style="margin-top: 0.85rem;">
+            <h3 class="book-title">La casa de los espíritus</h3>
+            <p class="book-author-lead">Isabel Allende</p>
+          </div>
+        </div>
+
+        <div class="book-meta-grid">
+          <div class="meta-item">
+            <span class="meta-label">Editorial</span>
+            <span class="meta-value">Editorial Sudamericana</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">ISBN</span>
+            <span class="meta-value meta-isbn">978-950-12-3456-9</span>
+          </div>
+        </div>
+
+        <div class="book-footer">
+          <span class="stock-pill">
+            <span class="stock-dot"></span> 20 ejemplares
+          </span>
+          <button class="btn btn-secondary" onclick="openAuthorModal('La casa de los espíritus', '978-950-12-3456-9', 'Editorial Sudamericana', 20, [{orden: 1, autor: 'Isabel Allende', rol: 'Autor principal', pais: 'Chile'}])">
+            Ver Autores
+          </button>
+        </div>
+      </article>
+
+      <!-- Libro 4: Cien años de soledad -->
+      <article class="book-card" data-title="Cien años de soledad" data-author="Gabriel García Márquez">
+        <div>
+          <div class="book-header">
+            <span class="genre-tag">No Ficción</span>
+            <span class="price-tag">$42.00</span>
+          </div>
+          <div class="book-main" style="margin-top: 0.85rem;">
+            <h3 class="book-title">Cien años de soledad</h3>
+            <p class="book-author-lead">Gabriel García Márquez</p>
+          </div>
+        </div>
+
+        <div class="book-meta-grid">
+          <div class="meta-item">
+            <span class="meta-label">Editorial</span>
+            <span class="meta-value">Penguin Random House</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">ISBN</span>
+            <span class="meta-value meta-isbn">978-950-12-3457-0</span>
+          </div>
+        </div>
+
+        <div class="book-footer">
+          <span class="stock-pill">
+            <span class="stock-dot"></span> 25 ejemplares
+          </span>
+          <button class="btn btn-secondary" onclick="openAuthorModal('Cien años de soledad', '978-950-12-3457-0', 'Penguin Random House', 25, [{orden: 1, autor: 'Gabriel García Márquez', rol: 'Autor principal', pais: 'Colombia'}])">
+            Ver Autores
+          </button>
+        </div>
+      </article>
+
+      <!-- Libro 5: El examen -->
+      <article class="book-card" data-title="El examen" data-author="Julio Cortázar">
+        <div>
+          <div class="book-header">
+            <span class="genre-tag">Ficción</span>
+            <span class="price-tag">$30.00</span>
+          </div>
+          <div class="book-main" style="margin-top: 0.85rem;">
+            <h3 class="book-title">El examen</h3>
+            <p class="book-author-lead">Julio Cortázar</p>
+          </div>
+        </div>
+
+        <div class="book-meta-grid">
+          <div class="meta-item">
+            <span class="meta-label">Editorial</span>
+            <span class="meta-value">Editorial Sudamericana</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">ISBN</span>
+            <span class="meta-value meta-isbn">978-950-12-3457-1</span>
+          </div>
+        </div>
+
+        <div class="book-footer">
+          <span class="stock-pill">
+            <span class="stock-dot"></span> 12 ejemplares
+          </span>
+          <button class="btn btn-secondary" onclick="openAuthorModal('El examen', '978-950-12-3457-1', 'Editorial Sudamericana', 12, [{orden: 1, autor: 'Julio Cortázar', rol: 'Autor principal', pais: 'Argentina'}])">
+            Ver Autores
+          </button>
+        </div>
+      </article>
+
+    </div>
+  </main>
+
+  <!-- Navbar Inferior Flotante Móvil (Dock Redondeado) -->
+  <nav class="mobile-bottom-nav" aria-label="Navegación móvil">
+    <a href="#catalogo" class="mobile-nav-link active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect width="7" height="7" x="3" y="3" rx="1"></rect>
+        <rect width="7" height="7" x="14" y="3" rx="1"></rect>
+        <rect width="7" height="7" x="14" y="14" rx="1"></rect>
+        <rect width="7" height="7" x="3" y="14" rx="1"></rect>
+      </svg>
+      <span>Catálogo</span>
+    </a>
+    <a href="#libros" class="mobile-nav-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+      </svg>
+      <span>Libros</span>
+    </a>
+    <a href="#clientes" class="mobile-nav-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+        <circle cx="9" cy="7" r="4"></circle>
+      </svg>
+      <span>Clientes</span>
+    </a>
+    <a href="#ventas" class="mobile-nav-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="8" cy="21" r="1"></circle>
+        <circle cx="19" cy="21" r="1"></circle>
+        <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+      </svg>
+      <span>Ventas</span>
+    </a>
+    <a href="#historial" class="mobile-nav-link">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+        <path d="M3 3v5h5"></path>
+      </svg>
+      <span>Historial</span>
+    </a>
+  </nav>
+
+  <!-- Modal Nativo: Detalle de Autorías con Chips Atómicos -->
+  <dialog id="modalAutorias" class="app-modal" aria-labelledby="modalTitulo">
+    <div class="modal-head">
+      <div class="modal-title-group">
+        <h3 id="modalTitulo">Rayuela</h3>
+        <!-- Chips atómicos que nunca parten oraciones a la mitad -->
+        <div class="modal-meta-pills" id="modalMetaPills">
+          <span class="meta-pill isbn-pill">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+            </svg>
+            <span id="modalMetaIsbn">ISBN 978-950-12-3456-8</span>
+          </span>
+          <span class="meta-pill">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="18" height="18" x="3" y="3" rx="2"></rect>
+              <path d="M3 9h18"></path>
+            </svg>
+            <span id="modalMetaEditorial">Editorial Planeta</span>
+          </span>
+          <span class="meta-pill stock-pill-modal">
+            <span class="stock-dot"></span>
+            <span id="modalMetaStock">10 ejemplares en depósito</span>
+          </span>
+        </div>
+      </div>
+      <button class="btn-ghost" onclick="closeAuthorModal()" aria-label="Cerrar modal">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="editorial-section-title">Equipo Editorial y Créditos Acreditados</div>
+
+      <table class="author-table">
+        <thead>
+          <tr>
+            <th style="width: 48px;">Orden</th>
+            <th>Autor / Creador</th>
+            <th>Rol Acreditado</th>
+            <th style="text-align: right;">Nacionalidad</th>
+          </tr>
+        </thead>
+        <tbody id="modalTableBody">
+          <!-- Inyectado dinámicamente -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="modal-footer">
+      <span class="modal-tip">Presiona <kbd>Esc</kbd> o toca afuera para cerrar</span>
+      <button class="btn btn-secondary" onclick="closeAuthorModal()">Cerrar</button>
+    </div>
+  </dialog>
+
+  <!-- Modal Nativo: Comprobante de Venta -->
+  <dialog id="modalVenta" class="app-modal" aria-labelledby="modalVentaTitulo">
+    <div class="modal-head">
+      <div class="modal-title-group">
+        <h3 id="modalVentaTitulo">Comprobante de Venta #1</h3>
+        <div class="modal-meta-pills">
+          <span class="meta-pill" id="modalVentaFecha">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            10/11/2026
+          </span>
+          <span class="meta-pill" id="modalVentaCliente">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            Cliente: Juan Pérez
+          </span>
+        </div>
+      </div>
+      <button class="btn-ghost" onclick="closeSaleModal()" aria-label="Cerrar modal">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18"></line>
+          <line x1="6" y1="6" x2="18" y2="18"></line>
+        </svg>
+      </button>
+    </div>
+
+    <div class="modal-body">
+      <div class="editorial-section-title">Detalle de Renglones Facturados</div>
+
+      <table class="author-table">
+        <thead>
+          <tr>
+            <th>Ejemplar</th>
+            <th style="text-align: center;">Cantidad</th>
+            <th style="text-align: right;">Subtotal</th>
+          </tr>
+        </thead>
+        <tbody id="modalVentaTableBody">
+          <!-- Inyectado dinámicamente -->
+        </tbody>
+      </table>
+
+      <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 1rem; border-top: 1px solid var(--color-border);">
+        <span style="font-weight: 600; font-size: 0.95rem;">Total Liquidado:</span>
+        <span id="modalVentaTotal" style="font-family: var(--font-mono); font-size: 1.35rem; font-weight: 700; color: var(--color-accent);">$145.00</span>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <span class="modal-tip">Comprobante inmutable</span>
+      <button class="btn btn-primary" onclick="closeSaleModal()">Entendido</button>
+    </div>
+  </dialog>
+
+  <script src="brand.js"></script>
+  <script>
+    // Gestión del Tema con Switch Animado
+    function toggleTheme() {
+      const html = document.documentElement;
+      const current = html.getAttribute('data-theme') || 'light';
+      const next = current === 'light' ? 'dark' : 'light';
+      html.setAttribute('data-theme', next);
+      
+      const themeSwitch = document.getElementById('themeSwitch');
+      const thumbIcon = document.getElementById('thumbIcon');
+      
+      if (next === 'dark') {
+        themeSwitch.setAttribute('aria-checked', 'true');
+        // Moon Icon in Thumb
+        thumbIcon.innerHTML = '<path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>';
+      } else {
+        themeSwitch.setAttribute('aria-checked', 'false');
+        // Sun Icon in Thumb
+        thumbIcon.innerHTML = `
+          <circle cx="12" cy="12" r="4"></circle>
+          <path d="M12 2v2"></path>
+          <path d="M12 20v2"></path>
+          <path d="m4.93 4.93 1.41 1.41"></path>
+          <path d="m17.66 17.66 1.41 1.41"></path>
+          <path d="M2 12h2"></path>
+          <path d="M20 12h2"></path>
+        `;
+      }
+    }
+
+    // Modal de Autores con Chips Atómicos
+    const modalAutorias = document.getElementById('modalAutorias');
+    
+    function openAuthorModal(title, isbn, publisher, stock, authors) {
+      document.getElementById('modalTitulo').textContent = title;
+      document.getElementById('modalMetaIsbn').textContent = `ISBN ${isbn}`;
+      document.getElementById('modalMetaEditorial').textContent = publisher;
+      document.getElementById('modalMetaStock').textContent = `${stock} ejemplares en depósito`;
+      
+      const tbody = document.getElementById('modalTableBody');
+      tbody.innerHTML = '';
+      
+      authors.forEach(a => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="font-family: var(--font-mono); font-weight: 600; color: var(--color-text-muted);">#${a.orden}</td>
+          <td style="font-weight: 600;">${a.autor}</td>
+          <td><span class="role-badge">${a.rol}</span></td>
+          <td style="text-align: right;"><span class="country-pill">${a.pais}</span></td>
+        `;
+        tbody.appendChild(tr);
+      });
+      
+      modalAutorias.showModal();
+    }
+
+    function closeAuthorModal() {
+      modalAutorias.close();
+    }
+
+    // Modal de Venta
+    const modalVenta = document.getElementById('modalVenta');
+    
+    function openSaleModal(title, date, client, total, items) {
+      document.getElementById('modalVentaTitulo').textContent = title;
+      document.getElementById('modalVentaFecha').innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;color:var(--color-text-muted);">
+          <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
+          <line x1="16" y1="2" x2="16" y2="6"></line>
+          <line x1="8" y1="2" x2="8" y2="6"></line>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+        </svg>
+        ${date}
+      `;
+      document.getElementById('modalVentaCliente').innerHTML = `
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:12px;height:12px;color:var(--color-text-muted);">
+          <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+          <circle cx="12" cy="7" r="4"></circle>
+        </svg>
+        Cliente: ${client}
+      `;
+      document.getElementById('modalVentaTotal').textContent = total;
+      
+      const tbody = document.getElementById('modalVentaTableBody');
+      tbody.innerHTML = '';
+      
+      items.forEach(it => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="font-weight: 500;">${it.libro}</td>
+          <td style="text-align: center; font-family: var(--font-mono);">${it.cant} u.</td>
+          <td style="text-align: right; font-family: var(--font-mono); font-weight: 600;">${it.subtotal}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+      
+      modalVenta.showModal();
+    }
+
+    function closeSaleModal() {
+      modalVenta.close();
+    }
+
+    // Cierre al cliquear el backdrop
+    [modalAutorias, modalVenta].forEach(m => {
+      m.addEventListener('click', (e) => {
+        const rect = m.getBoundingClientRect();
+        const isInDialog = (
+          rect.top <= e.clientY &&
+          e.clientY <= rect.top + rect.height &&
+          rect.left <= e.clientX &&
+          e.clientX <= rect.left + rect.width
+        );
+        if (!isInDialog) {
+          m.close();
+        }
+      });
+    });
+
+    // Filtro interactivo en vivo
+    function filterBooks(query) {
+      const q = query.toLowerCase().trim();
+      const cards = document.querySelectorAll('.book-card');
+      let visible = 0;
+      cards.forEach(card => {
+        const title = (card.getAttribute('data-title') || '').toLowerCase();
+        const author = (card.getAttribute('data-author') || '').toLowerCase();
+        if (title.includes(q) || author.includes(q)) {
+          card.style.display = '';
+          visible++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+      document.getElementById('resultsCount').textContent = `${visible} obras encontradas`;
+    }
+  </script>
+</body>
+</html>

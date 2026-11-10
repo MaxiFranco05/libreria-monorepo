@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Librería Central - Sistema de gestión de catálogo, libros, clientes y ventas">
+  <meta name="description" content="Librería Central - Sistema de gestión de catálogo, libros, clientes y ventas con identidad editorial y modo accesible">
   <title>Librería Central — Gestión Editorial y Ventas</title>
   
   <!-- Inicialización inmediata de tema para evitar parpadeo blanco (FOUC) -->
@@ -18,10 +18,16 @@
     })();
   </script>
 
+  <!-- Tipografía Editorial de Alta Factura (Anti-Slop) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400..600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/layout.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/views.css">
+  
   <script defer src="js/utils/formatters.js"></script>
   <script defer src="js/utils/validators.js"></script>
   <script defer src="js/api.js"></script>
@@ -35,466 +41,567 @@
   <script defer src="js/app.js"></script>
 </head>
 <body>
-  <!-- Enlace accesible de salto directo al contenido principal -->
+  <!-- Enlace accesible de salto directo -->
   <a href="#main-content" class="skip-link">Saltar al contenido principal</a>
 
-  <!-- Encabezado y barra de navegación institucional -->
-  <header class="app-header" role="banner">
-    <div class="header-container">
-      <div class="header-top">
+  <!-- Banner flotante para salir del simulador móvil -->
+  <div class="simulator-exit-banner" id="simulator-exit-banner" onclick="toggleDeviceSimulator()">
+    ✕ Salir del Simulador Móvil (390x844)
+  </div>
+
+  <!-- Contenedor del Simulador (en modo normal es transparente, en modo simulador se vuelve carcasa de teléfono) -->
+  <div class="simulator-phone-shell" id="simulator-shell">
+    
+    <div class="phone-notch" aria-hidden="true"></div>
+
+    <!-- Encabezado Isleño Flotante (Redondeado) -->
+    <div class="header-wrapper">
+      <header class="app-header" role="banner">
         <a href="#catalogo" class="brand" aria-label="Librería Central - Inicio">
           <div class="brand-icon-wrapper" aria-hidden="true">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            <!-- Lucide BookOpen SVG -->
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
             </svg>
           </div>
           <div class="brand-text">
             <h1 class="brand-title">Librería Central</h1>
-            <p class="brand-subtitle">Gestión Editorial y Ventas</p>
+            <p class="brand-subtitle">Fondo Editorial & Ventas</p>
           </div>
         </a>
 
+        <!-- Navegación Desktop Isleña -->
+        <nav class="desktop-nav" aria-label="Navegación principal">
+          <a href="#catalogo" class="nav-link active" id="nav-catalogo" aria-current="page">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="7" height="7" x="3" y="3" rx="1"></rect>
+              <rect width="7" height="7" x="14" y="3" rx="1"></rect>
+              <rect width="7" height="7" x="14" y="14" rx="1"></rect>
+              <rect width="7" height="7" x="3" y="14" rx="1"></rect>
+            </svg>
+            Catálogo
+          </a>
+          <a href="#libros" class="nav-link" id="nav-libros">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+            </svg>
+            Libros
+          </a>
+          <a href="#clientes" class="nav-link" id="nav-clientes">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+            Clientes
+          </a>
+          <a href="#ventas" class="nav-link" id="nav-ventas">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="8" cy="21" r="1"></circle>
+              <circle cx="19" cy="21" r="1"></circle>
+              <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+            </svg>
+            Ventas
+          </a>
+          <a href="#historial" class="nav-link" id="nav-historial">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+              <path d="M3 3v5h5"></path>
+              <path d="M12 7v5l4 2"></path>
+            </svg>
+            Historial
+          </a>
+        </nav>
+
+        <!-- Acciones del Header: Simulador de Teléfono + Switch Animado -->
         <div class="header-actions">
-          <button type="button" class="theme-toggle-btn" id="theme-toggle" aria-label="Cambiar tema visual" title="Alternar modo claro / oscuro">
-            <span id="theme-toggle-icon" aria-hidden="true">🌙</span>
+          <button type="button" class="btn-simulator-toggle" id="simulator-toggle" onclick="toggleDeviceSimulator()" aria-label="Simular vista en dispositivo móvil" title="Simular interfaz de teléfono móvil (390x844)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="14" height="20" x="5" y="2" rx="2" ry="2"></rect>
+              <path d="M12 18h.01"></path>
+            </svg>
+            <span id="simulator-btn-text">Simular Móvil</span>
+          </button>
+
+          <!-- Switch Animado (Lucide Sun/Moon) -->
+          <button type="button" class="theme-switch" id="theme-toggle" role="switch" aria-checked="false" aria-label="Cambiar tema claro u oscuro" title="Alternar modo claro / oscuro">
+            <span class="theme-switch-icon sun" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2"></path>
+                <path d="M12 20v2"></path>
+                <path d="m4.93 4.93 1.41 1.41"></path>
+                <path d="m17.66 17.66 1.41 1.41"></path>
+                <path d="M2 12h2"></path>
+                <path d="M20 12h2"></path>
+                <path d="m6.34 17.66-1.41 1.41"></path>
+                <path d="m19.07 4.93-1.41 1.41"></path>
+              </svg>
+            </span>
+            <span class="theme-switch-icon moon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"></path>
+              </svg>
+            </span>
+            <span class="theme-switch-thumb" id="theme-toggle-thumb">
+              <svg id="theme-toggle-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="4"></circle>
+                <path d="M12 2v2"></path>
+                <path d="M12 20v2"></path>
+                <path d="m4.93 4.93 1.41 1.41"></path>
+                <path d="m17.66 17.66 1.41 1.41"></path>
+                <path d="M2 12h2"></path>
+                <path d="M20 12h2"></path>
+              </svg>
+            </span>
           </button>
         </div>
-      </div>
-
-      <nav class="app-nav" aria-label="Navegación principal">
-        <ul class="nav-list">
-          <li class="nav-item">
-            <a href="#catalogo" class="nav-link" id="nav-catalogo" aria-current="page">Catálogo</a>
-          </li>
-          <li class="nav-item">
-            <a href="#libros" class="nav-link" id="nav-libros">Libros</a>
-          </li>
-          <li class="nav-item">
-            <a href="#clientes" class="nav-link" id="nav-clientes">Clientes</a>
-          </li>
-          <li class="nav-item">
-            <a href="#ventas" class="nav-link" id="nav-ventas">Ventas</a>
-          </li>
-          <li class="nav-item">
-            <a href="#historial" class="nav-link" id="nav-historial">Historial</a>
-          </li>
-        </ul>
-      </nav>
+      </header>
     </div>
-  </header>
 
-  <!-- Contenedor principal de vistas SPA -->
-  <main id="main-content" class="main-content" tabindex="-1">
-    <div class="content-container">
-      
-      <!-- Vista 1: Catálogo -->
-      <section id="catalogo" class="view-section active" aria-labelledby="title-catalogo">
-        <header class="view-header">
-          <h2 id="title-catalogo" class="view-title" tabindex="-1">Catálogo de Libros</h2>
-          <p class="view-description">Exploración y búsqueda de ejemplares disponibles en el fondo editorial.</p>
-        </header>
-        <div class="view-content" id="catalogo-content">
-          <div class="catalogo-toolbar">
-            <div class="form-group search-group">
-              <label for="catalogo-search" class="form-label">Buscar libro por título:</label>
-              <input type="search" id="catalogo-search" class="form-control" placeholder="Ej. Ficciones, Rayuela, Cien años de soledad..." autocomplete="off">
-            </div>
-            <p class="visually-hidden" aria-live="polite" id="catalogo-search-status"></p>
-          </div>
-
-          <!-- Contenedor de estados visuales (Carga, Vacía, Sin resultados, Error) -->
-          <div id="catalogo-state" aria-live="polite"></div>
-
-          <!-- Cuadrícula de libros -->
-          <div class="catalogo-grid" id="catalogo-grid"></div>
-
-          <!-- Paginación accesible -->
-          <div class="pagination-bar" id="catalogo-pagination" hidden>
-            <span class="pagination-info" id="catalogo-pagination-info">Mostrando página 1</span>
-            <div class="pagination-controls">
-              <button type="button" class="btn btn-secondary btn-pagination" id="btn-catalogo-prev" disabled>
-                &larr; Anterior
-              </button>
-              <button type="button" class="btn btn-secondary btn-pagination" id="btn-catalogo-next" disabled>
-                Siguiente &rarr;
-              </button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Vista 2: Libros -->
-      <section id="libros" class="view-section" aria-labelledby="title-libros">
-        <header class="view-header">
-          <h2 id="title-libros" class="view-title" tabindex="-1">Administración de Libros</h2>
-          <p class="view-description">Alta e incorporación de nuevos títulos con autores, género, precio y stock al fondo editorial.</p>
-        </header>
-        <div class="view-content" id="libros-content">
-          <div class="card form-card">
-            <h3 class="card-subtitle">Registrar Nuevo Libro</h3>
-            <div id="libro-feedback" class="form-feedback" aria-live="polite"></div>
-            <form id="form-libro" class="app-form" novalidate>
-              <div class="form-group">
-                <label for="libro-titulo" class="form-label">Título <span class="required">*</span></label>
-                <input type="text" id="libro-titulo" name="titulo" class="form-control" required placeholder="Ej. El Aleph" autocomplete="off">
-                <span class="field-error" id="error-libro-titulo" aria-live="polite"></span>
+    <!-- Contenedor principal de vistas SPA -->
+    <main id="main-content" class="main-content" tabindex="-1">
+      <div class="content-container">
+        
+        <!-- Vista 1: Catálogo -->
+        <section id="catalogo" class="view-section active" aria-labelledby="title-catalogo">
+          <header class="view-header">
+            <h2 id="title-catalogo" class="view-title" tabindex="-1">Catálogo de Libros</h2>
+            <p class="view-description">Exploración de ejemplares en depósito, consulta de autorías acreditadas e inventario sincronizado.</p>
+          </header>
+          <div class="view-content" id="catalogo-content">
+            <div class="catalogo-toolbar">
+              <div class="form-group search-group">
+                <label for="catalogo-search" class="form-label">Buscar libro por título o autor:</label>
+                <input type="search" id="catalogo-search" class="form-control" placeholder="Ej. El Aleph, Rayuela, Cien años de soledad..." autocomplete="off">
               </div>
-
-              <div class="form-row">
-                <div class="form-group form-col">
-                  <label for="libro-isbn" class="form-label">ISBN <span class="required">*</span></label>
-                  <input type="text" id="libro-isbn" name="isbn" class="form-control" required placeholder="Ej. 9789500424554" autocomplete="off">
-                  <small class="form-hint">Código único de identificación editorial.</small>
-                  <span class="field-error" id="error-libro-isbn" aria-live="polite"></span>
-                </div>
-
-                <div class="form-group form-col">
-                  <label for="libro-precio" class="form-label">Precio Unitario ($) <span class="required">*</span></label>
-                  <input type="number" id="libro-precio" name="precio" class="form-control" required min="0.01" step="0.01" placeholder="Ej. 2500.00">
-                  <span class="field-error" id="error-libro-precio" aria-live="polite"></span>
-                </div>
-
-                <div class="form-group form-col">
-                  <label for="libro-stock" class="form-label">Stock Inicial <span class="required">*</span></label>
-                  <input type="number" id="libro-stock" name="stock" class="form-control" required min="0" step="1" value="10" placeholder="Ej. 10">
-                  <span class="field-error" id="error-libro-stock" aria-live="polite"></span>
-                </div>
-              </div>
-
-              <div class="form-row">
-                <div class="form-group form-col">
-                  <label for="libro-editorial" class="form-label">Editorial <span class="required">*</span></label>
-                  <select id="libro-editorial" name="editorialId" class="form-control" required>
-                    <option value="">-- Cargando editoriales... --</option>
-                  </select>
-                  <span class="field-error" id="error-libro-editorial" aria-live="polite"></span>
-                </div>
-
-                <div class="form-group form-col">
-                  <label for="libro-genero" class="form-label">Género Literario</label>
-                  <select id="libro-genero" name="generoId" class="form-control">
-                    <option value="">«Sin clasificar»</option>
-                  </select>
-                  <small class="form-hint">Opcional. Por defecto «Sin clasificar».</small>
-                  <span class="field-error" id="error-libro-genero" aria-live="polite"></span>
-                </div>
-              </div>
-
-              <!-- Autorías -->
-              <div class="form-group">
-                <fieldset class="form-fieldset" id="fieldset-autores">
-                  <legend class="form-legend">Equipo Editorial y Autorías <span class="required">* (Mínimo un autor)</span></legend>
-                  
-                  <div class="subform-box">
-                    <div class="form-row" style="align-items: flex-end;">
-                      <div class="form-group form-col" style="flex: 2;">
-                        <label for="libro-autor-id-input" class="form-label">ID de Autor</label>
-                        <div style="display: flex; gap: 0.5rem;">
-                          <input type="number" id="libro-autor-id-input" class="form-control" min="1" step="1" placeholder="Ej. 1">
-                          <button type="button" class="btn btn-secondary" id="btn-verificar-autor">Verificar ID</button>
-                        </div>
-                        <span id="libro-autor-verificado-info" style="font-size: 0.85rem; font-weight: 500; color: var(--accent-navy); margin-top: 0.25rem; display: block;"></span>
-                      </div>
-
-                      <div class="form-group form-col" style="flex: 1.5;">
-                        <label for="libro-autor-rol" class="form-label">Rol en la Obra</label>
-                        <select id="libro-autor-rol" class="form-control">
-                          <option value="autor">Autor</option>
-                          <option value="coautor">Coautor</option>
-                          <option value="traductor">Traductor</option>
-                          <option value="ilustrador">Ilustrador</option>
-                        </select>
-                      </div>
-
-                      <div class="form-group form-col" style="flex: 1;">
-                        <label for="libro-autor-orden" class="form-label">Orden</label>
-                        <input type="number" id="libro-autor-orden" class="form-control" min="1" step="1" value="1">
-                      </div>
-
-                      <div class="form-group form-col" style="flex: 1.2;">
-                        <button type="button" class="btn btn-secondary btn-block" id="btn-agregar-autor-lista">
-                          + Agregar
-                        </button>
-                      </div>
-                    </div>
-
-                    <!-- Lista visual de autorías agregadas -->
-                    <div id="libro-autores-agregados" style="margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.5rem;">
-                      <span class="text-muted" style="font-size: 0.85rem; font-style: italic;">No hay autorías añadidas todavía.</span>
-                    </div>
-                  </div>
-                  <span class="field-error" id="error-libro-autores" aria-live="polite"></span>
-                </fieldset>
-              </div>
-
-              <div class="form-actions">
-                <button type="submit" class="btn btn-primary" id="btn-submit-libro">Registrar Libro</button>
-                <button type="reset" class="btn btn-secondary" id="btn-reset-libro">Limpiar</button>
-              </div>
-            </form>
-          </div>
-
-          <div class="card table-card">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-              <h3 class="card-subtitle" style="margin-bottom: 0;">Nómina de Libros Registrados</h3>
-              <button type="button" class="btn btn-secondary btn-pagination" id="btn-refresh-libros">Actualizar</button>
-            </div>
-            <div class="table-responsive" id="libros-table-container">
-              <table class="table" id="tabla-libros">
-                <thead>
-                  <tr>
-                    <th scope="col">ID</th>
-                    <th scope="col">Título</th>
-                    <th scope="col">ISBN</th>
-                    <th scope="col">Editorial</th>
-                    <th scope="col">Género</th>
-                    <th scope="col">Stock</th>
-                    <th scope="col">Precio</th>
-                    <th scope="col">Acción</th>
-                  </tr>
-                </thead>
-                <tbody id="libros-table-body"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Vista 3: Clientes -->
-      <section id="clientes" class="view-section" aria-labelledby="title-clientes">
-        <header class="view-header">
-          <h2 id="title-clientes" class="view-title" tabindex="-1">Registro de Clientes</h2>
-          <p class="view-description">Alta de clientes habilitados para compras y consulta de fichas comerciales.</p>
-        </header>
-        <div class="view-content" id="clientes-content">
-          <div class="card form-card">
-            <h3 class="card-subtitle">Registrar Nuevo Cliente</h3>
-            <div id="cliente-feedback" class="form-feedback" aria-live="polite"></div>
-            <form id="form-cliente" class="app-form" novalidate>
-              <div class="form-row">
-                <div class="form-group form-col">
-                  <label for="cliente-nombre" class="form-label">Nombre Completo <span class="required">*</span></label>
-                  <input type="text" id="cliente-nombre" name="nombre" class="form-control" required placeholder="Ej. Juan Pérez" autocomplete="off">
-                  <span class="field-error" id="error-cliente-nombre" aria-live="polite"></span>
-                </div>
-
-                <div class="form-group form-col">
-                  <label for="cliente-email" class="form-label">Correo Electrónico <span class="required">*</span></label>
-                  <input type="email" id="cliente-email" name="email" class="form-control" required placeholder="Ej. juan.perez@example.com" autocomplete="off">
-                  <small class="form-hint">Debe ser único en el sistema.</small>
-                  <span class="field-error" id="error-cliente-email" aria-live="polite"></span>
-                </div>
-              </div>
-
-              <div class="form-actions">
-                <button type="submit" class="btn btn-primary" id="btn-submit-cliente">Registrar Cliente</button>
-                <button type="reset" class="btn btn-secondary" id="btn-reset-cliente">Limpiar</button>
-              </div>
-            </form>
-          </div>
-
-          <!-- Consulta Individual por ID -->
-          <div class="card form-card" style="margin-top: 1.5rem;">
-            <h3 class="card-subtitle">Consultar Ficha de Cliente</h3>
-            <div style="display: flex; gap: 0.5rem; max-width: 400px; margin-bottom: 1rem;">
-              <input type="number" id="cliente-buscar-id" class="form-control" placeholder="ID de cliente (ej. 1)" min="1" step="1">
-              <button type="button" class="btn btn-secondary" id="btn-buscar-cliente-id">Buscar</button>
-            </div>
-            <div id="cliente-consulta-resultado" style="padding: 0.85rem; background: var(--bg-surface-alt); border-radius: var(--radius-sm); border: 1px solid var(--border-color); display: none;"></div>
-          </div>
-
-          <div class="card table-card" style="margin-top: 1.5rem;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-              <h3 class="card-subtitle" style="margin-bottom: 0;">Nómina de Clientes Registrados</h3>
-              <button type="button" class="btn btn-secondary btn-pagination" id="btn-refresh-clientes">Actualizar</button>
-            </div>
-            <div class="table-responsive" id="clientes-table-container">
-              <table class="table" id="tabla-clientes">
-                <thead>
-                  <tr>
-                    <th scope="col">ID</th>
-                    <th scope="col">Nombre</th>
-                    <th scope="col">Correo Electrónico</th>
-                  </tr>
-                </thead>
-                <tbody id="clientes-table-body"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Vista 4: Ventas -->
-      <section id="ventas" class="view-section" aria-labelledby="title-ventas">
-        <header class="view-header">
-          <h2 id="title-ventas" class="view-title" tabindex="-1">Registrar Venta</h2>
-          <p class="view-description">Composición de pedidos, cálculo automático de importes y emisión de comprobantes comerciales.</p>
-        </header>
-        <div class="view-content" id="ventas-content">
-          <div class="ventas-layout">
-            
-            <!-- Panel izquierdo: Selección de cliente y agregación de libros -->
-            <div class="card form-card ventas-form-panel">
-              <h3 class="card-subtitle">Datos de la Venta</h3>
-              <div id="venta-feedback" class="form-feedback" aria-live="polite"></div>
-              
-              <!-- Selección de Cliente con opción de ID -->
-              <div class="form-group">
-                <label for="venta-cliente" class="form-label">Cliente Comprador <span class="required">*</span></label>
-                <select id="venta-cliente" name="clienteId" class="form-control" required>
-                  <option value="">-- Seleccione un cliente --</option>
-                </select>
-                <div style="margin-top: 0.5rem; display: flex; gap: 0.5rem;">
-                  <input type="number" id="venta-cliente-id-search" class="form-control" min="1" step="1" placeholder="O buscar por ID">
-                  <button type="button" class="btn btn-secondary btn-pagination" id="btn-venta-verificar-cliente">Buscar ID</button>
-                </div>
-                <span class="field-error" id="error-venta-cliente" aria-live="polite"></span>
-              </div>
-
-              <hr class="form-divider" aria-hidden="true">
-
-              <h4 class="form-section-title">Agregar Libros al Pedido</h4>
-
-              <!-- Selección de Libro -->
-              <div class="form-group">
-                <label for="venta-libro" class="form-label">Libro del Catálogo <span class="required">*</span></label>
-                <select id="venta-libro" name="libroId" class="form-control">
-                  <option value="">-- Seleccione un libro --</option>
-                </select>
-                <span class="field-error" id="error-venta-libro" aria-live="polite"></span>
-              </div>
-
-              <!-- Cantidad -->
-              <div class="form-group">
-                <label for="venta-cantidad" class="form-label">Cantidad <span class="required">*</span></label>
-                <input type="number" id="venta-cantidad" name="cantidad" class="form-control" min="1" step="1" value="1">
-                <small class="form-hint">Número entero positivo mayor o igual a 1.</small>
-                <span class="field-error" id="error-venta-cantidad" aria-live="polite"></span>
-              </div>
-
-              <button type="button" class="btn btn-secondary btn-block" id="btn-agregar-renglon">
-                Agregar al pedido
-              </button>
+              <p class="visually-hidden" aria-live="polite" id="catalogo-search-status"></p>
             </div>
 
-            <!-- Panel derecho: Canasta / Borrador del pedido y Confirmación -->
-            <div class="card table-card ventas-cart-panel">
-              <h3 class="card-subtitle">Pedido en Borrador</h3>
-              
-              <div class="table-responsive" id="borrador-table-container">
-                <table class="table" id="tabla-borrador-venta">
-                  <thead>
-                    <tr>
-                      <th scope="col">Libro</th>
-                      <th scope="col">Precio Catálogo</th>
-                      <th scope="col">Cantidad</th>
-                      <th scope="col">Subtotal Est.</th>
-                      <th scope="col">Acciones</th>
-                    </tr>
-                  </thead>
-                  <tbody id="borrador-table-body"></tbody>
-                </table>
-              </div>
+            <!-- Estado visual dinámico -->
+            <div id="catalogo-state" aria-live="polite"></div>
 
-              <!-- Resumen financiero y confirmación -->
-              <div class="ventas-summary-box">
-                <div class="ventas-total-row">
-                  <span class="ventas-total-label">Total Estimado:</span>
-                  <span class="ventas-total-amount" id="venta-total-general">$0.00</span>
-                </div>
-                <div class="ventas-actions">
-                  <button type="button" class="btn btn-primary btn-lg btn-block" id="btn-confirmar-venta">
-                    Confirmar Venta
-                  </button>
-                </div>
-              </div>
+            <!-- Grilla interactiva -->
+            <div class="catalogo-grid" id="catalogo-grid"></div>
 
-              <!-- Resumen de venta confirmada -->
-              <div id="venta-confirmada-resumen" style="display: none;"></div>
-
-            </div>
-
-          </div>
-        </div>
-      </section>
-
-      <!-- Vista 5: Historial -->
-      <section id="historial" class="view-section" aria-labelledby="title-historial">
-        <header class="view-header">
-          <h2 id="title-historial" class="view-title" tabindex="-1">Historial de Ventas</h2>
-          <p class="view-description">Auditoría inmutable de comprobantes comerciales emitidos y detalle de valores facturados.</p>
-        </header>
-        <div class="view-content" id="historial-content">
-          <div class="historial-container">
-            <div id="historial-state" aria-live="polite"></div>
-            <div class="table-responsive" id="historial-table-container">
-              <table class="table" id="tabla-historial-ventas">
-                <thead>
-                  <tr>
-                    <th scope="col">Comprobante #</th>
-                    <th scope="col">Fecha y Hora</th>
-                    <th scope="col">Cliente ID</th>
-                    <th scope="col">Total Facturado</th>
-                    <th scope="col">Acción</th>
-                  </tr>
-                </thead>
-                <tbody id="historial-table-body"></tbody>
-              </table>
-            </div>
-
-            <div class="pagination-bar" id="historial-pagination" hidden>
-              <span class="pagination-info" id="historial-pagination-info">Mostrando página 1</span>
+            <!-- Barra de paginación -->
+            <div class="pagination-bar" id="catalogo-pagination" hidden>
+              <span class="pagination-info" id="catalogo-pagination-info">Mostrando página 1</span>
               <div class="pagination-controls">
-                <button type="button" class="btn btn-secondary btn-pagination" id="btn-historial-prev" disabled>
+                <button type="button" class="btn btn-secondary btn-pagination" id="btn-catalogo-prev" disabled>
                   &larr; Anterior
                 </button>
-                <button type="button" class="btn btn-secondary btn-pagination" id="btn-historial-next" disabled>
+                <button type="button" class="btn btn-secondary btn-pagination" id="btn-catalogo-next" disabled>
                   Siguiente &rarr;
                 </button>
               </div>
             </div>
           </div>
+        </section>
+
+        <!-- Vista 2: Libros -->
+        <section id="libros" class="view-section" aria-labelledby="title-libros">
+          <header class="view-header">
+            <h2 id="title-libros" class="view-title" tabindex="-1">Administración de Libros</h2>
+            <p class="view-description">Alta de ejemplares editoriales con asignación estricta de autores verificados por ID.</p>
+          </header>
+          <div class="view-content" id="libros-content">
+            <div class="view-grid-two-cols">
+              
+              <!-- Formulario de alta -->
+              <div class="card">
+                <h3 class="card-title">Registrar Nuevo Libro</h3>
+                <div id="libro-feedback" class="form-feedback" aria-live="polite"></div>
+                
+                <form id="form-libro" class="app-form" novalidate>
+                  <div class="form-group">
+                    <label for="libro-titulo" class="form-label">Título: <span class="required">*</span></label>
+                    <input type="text" id="libro-titulo" name="titulo" class="form-control" required placeholder="Ej. El Aleph" autocomplete="off">
+                    <span class="field-error" id="error-libro-titulo" aria-live="polite"></span>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="libro-isbn" class="form-label">ISBN: <span class="required">*</span></label>
+                    <input type="text" id="libro-isbn" name="isbn" class="form-control" required placeholder="Ej. 9789500424554" autocomplete="off">
+                    <span class="field-error" id="error-libro-isbn" aria-live="polite"></span>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="libro-precio" class="form-label">Precio ($): <span class="required">*</span></label>
+                    <input type="number" id="libro-precio" name="precio" class="form-control" required min="0.01" step="0.01" placeholder="Ej. 2500.00">
+                    <span class="field-error" id="error-libro-precio" aria-live="polite"></span>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="libro-stock" class="form-label">Stock Inicial: <span class="required">*</span></label>
+                    <input type="number" id="libro-stock" name="stock" class="form-control" required min="0" step="1" value="10" placeholder="Ej. 10">
+                    <span class="field-error" id="error-libro-stock" aria-live="polite"></span>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="libro-editorial" class="form-label">Editorial: <span class="required">*</span></label>
+                    <select id="libro-editorial" name="editorialId" class="form-control" required>
+                      <option value="">-- Seleccionar editorial --</option>
+                    </select>
+                    <span class="field-error" id="error-libro-editorial" aria-live="polite"></span>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="libro-genero" class="form-label">Género:</label>
+                    <select id="libro-genero" name="generoId" class="form-control">
+                      <option value="">-- Sin clasificar --</option>
+                    </select>
+                    <span class="field-error" id="error-libro-genero" aria-live="polite"></span>
+                  </div>
+
+                  <!-- Subformulario de Autorías -->
+                  <fieldset class="form-fieldset" id="fieldset-autores" style="border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 1rem; margin-top: 1rem;">
+                    <legend style="font-weight: 600; font-size: 0.9rem; padding: 0 0.5rem; color: var(--accent-primary);">Asignación de Autores</legend>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+                      Verificá el ID de autor en la base de datos antes de incorporarlo al libro.
+                    </p>
+
+                    <div style="display: flex; gap: 0.5rem; align-items: flex-end; margin-bottom: 0.75rem;">
+                      <div style="flex: 1;">
+                        <label for="libro-autor-id-input" class="form-label">ID Autor:</label>
+                        <input type="number" id="libro-autor-id-input" class="form-control" min="1" step="1" placeholder="Ej. 1">
+                      </div>
+                      <button type="button" class="btn btn-secondary" id="btn-verificar-autor">Verificar ID</button>
+                    </div>
+
+                    <span id="libro-autor-verificado-info" style="font-size: 0.85rem; font-weight: 500; color: var(--accent-primary); margin-bottom: 0.75rem; display: block;"></span>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; margin-bottom: 0.75rem;">
+                      <div>
+                        <label for="libro-autor-rol" class="form-label">Rol:</label>
+                        <select id="libro-autor-rol" class="form-control">
+                          <option value="autor">Autor principal</option>
+                          <option value="coautor">Coautor</option>
+                          <option value="traductor">Traductor</option>
+                          <option value="ilustrador">Ilustrador</option>
+                          <option value="prologuista">Prologuista</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label for="libro-autor-orden" class="form-label">Orden:</label>
+                        <input type="number" id="libro-autor-orden" class="form-control" min="1" step="1" value="1">
+                      </div>
+                    </div>
+
+                    <button type="button" class="btn btn-secondary btn-block" id="btn-agregar-autor-lista">
+                      + Agregar Autor a la Lista
+                    </button>
+
+                    <div id="libro-autores-agregados" style="margin-top: 0.75rem; display: flex; flex-wrap: wrap; gap: 0.5rem;"></div>
+                    <span class="field-error" id="error-libro-autores" aria-live="polite"></span>
+                  </fieldset>
+
+                  <div class="form-actions-bar">
+                    <button type="submit" class="btn btn-primary" id="btn-submit-libro">Registrar Libro</button>
+                    <button type="reset" class="btn btn-secondary" id="btn-reset-libro">Limpiar</button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Tabla de libros existentes -->
+              <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                  <h3 class="card-title" style="margin: 0;">Libros en Base de Datos</h3>
+                  <button type="button" class="btn btn-secondary btn-pagination" id="btn-refresh-libros">Actualizar</button>
+                </div>
+                <div class="table-responsive" id="libros-table-container">
+                  <table class="table" id="tabla-libros">
+                    <thead>
+                      <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Título</th>
+                        <th scope="col">ISBN</th>
+                        <th scope="col">Precio</th>
+                        <th scope="col">Stock</th>
+                      </tr>
+                    </thead>
+                    <tbody id="libros-table-body"></tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        <!-- Vista 3: Clientes -->
+        <section id="clientes" class="view-section" aria-labelledby="title-clientes">
+          <header class="view-header">
+            <h2 id="title-clientes" class="view-title" tabindex="-1">Registro de Clientes</h2>
+            <p class="view-description">Padrón de compradores con validación de correo electrónico único.</p>
+          </header>
+          <div class="view-content" id="clientes-content">
+            <div class="view-grid-two-cols">
+              
+              <div class="card">
+                <h3 class="card-title">Nuevo Cliente</h3>
+                <div id="cliente-feedback" class="form-feedback" aria-live="polite"></div>
+
+                <form id="form-cliente" class="app-form" novalidate>
+                  <div class="form-group">
+                    <label for="cliente-nombre" class="form-label">Nombre Completo: <span class="required">*</span></label>
+                    <input type="text" id="cliente-nombre" name="nombre" class="form-control" required placeholder="Ej. Juan Pérez" autocomplete="off">
+                    <span class="field-error" id="error-cliente-nombre" aria-live="polite"></span>
+                  </div>
+
+                  <div class="form-group">
+                    <label for="cliente-email" class="form-label">Correo Electrónico: <span class="required">*</span></label>
+                    <input type="email" id="cliente-email" name="email" class="form-control" required placeholder="Ej. juan.perez@example.com" autocomplete="off">
+                    <span class="field-error" id="error-cliente-email" aria-live="polite"></span>
+                  </div>
+
+                  <div class="form-actions-bar">
+                    <button type="submit" class="btn btn-primary" id="btn-submit-cliente">Registrar Cliente</button>
+                    <button type="reset" class="btn btn-secondary" id="btn-reset-cliente">Limpiar</button>
+                  </div>
+                </form>
+
+                <hr style="margin: 1.5rem 0; border: none; border-top: 1px solid var(--border-color);">
+
+                <h4 style="font-size: 1rem; margin-bottom: 0.75rem;">Consulta Directa por ID</h4>
+                <div style="display: flex; gap: 0.5rem; margin-bottom: 0.75rem;">
+                  <input type="number" id="cliente-buscar-id" class="form-control" placeholder="ID de cliente (ej. 1)" min="1" step="1">
+                  <button type="button" class="btn btn-secondary" id="btn-buscar-cliente-id">Buscar</button>
+                </div>
+                <div id="cliente-consulta-resultado" style="padding: 0.85rem; background: var(--bg-surface-alt); border-radius: var(--radius-sm); border: 1px solid var(--border-color); display: none;"></div>
+              </div>
+
+              <div class="card">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                  <h3 class="card-title" style="margin: 0;">Clientes Registrados</h3>
+                  <button type="button" class="btn btn-secondary btn-pagination" id="btn-refresh-clientes">Actualizar</button>
+                </div>
+                <div class="table-responsive" id="clientes-table-container">
+                  <table class="table" id="tabla-clientes">
+                    <thead>
+                      <tr>
+                        <th scope="col">ID</th>
+                        <th scope="col">Nombre</th>
+                        <th scope="col">Correo Electrónico</th>
+                      </tr>
+                    </thead>
+                    <tbody id="clientes-table-body"></tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        <!-- Vista 4: Ventas -->
+        <section id="ventas" class="view-section" aria-labelledby="title-ventas">
+          <header class="view-header">
+            <h2 id="title-ventas" class="view-title" tabindex="-1">Punto de Venta</h2>
+            <p class="view-description">Facturación comercial y emisión de comprobantes con validación de stock disponible.</p>
+          </header>
+          <div class="view-content" id="ventas-content">
+            <div class="ventas-workflow-grid">
+              
+              <div class="card">
+                <h3 class="card-title">Armar Pedido</h3>
+                <div id="venta-feedback" class="form-feedback" aria-live="polite"></div>
+
+                <div class="form-group">
+                  <label for="venta-cliente" class="form-label">Cliente Comprador: <span class="required">*</span></label>
+                  <select id="venta-cliente" name="clienteId" class="form-control" required>
+                    <option value="">-- Seleccionar cliente --</option>
+                  </select>
+                  <div style="display: flex; gap: 0.5rem; margin-top: 0.5rem;">
+                    <input type="number" id="venta-cliente-id-search" class="form-control" min="1" step="1" placeholder="O buscar por ID">
+                    <button type="button" class="btn btn-secondary btn-pagination" id="btn-venta-verificar-cliente">Buscar ID</button>
+                  </div>
+                  <span class="field-error" id="error-venta-cliente" aria-live="polite"></span>
+                </div>
+
+                <hr style="margin: 1.25rem 0; border: none; border-top: 1px solid var(--border-color);">
+
+                <div class="form-group">
+                  <label for="venta-libro" class="form-label">Libro a Facturar:</label>
+                  <select id="venta-libro" name="libroId" class="form-control">
+                    <option value="">-- Seleccionar libro --</option>
+                  </select>
+                  <span class="field-error" id="error-venta-libro" aria-live="polite"></span>
+                </div>
+
+                <div class="form-group">
+                  <label for="venta-cantidad" class="form-label">Cantidad:</label>
+                  <input type="number" id="venta-cantidad" name="cantidad" class="form-control" min="1" step="1" value="1">
+                  <span class="field-error" id="error-venta-cantidad" aria-live="polite"></span>
+                </div>
+
+                <button type="button" class="btn btn-secondary btn-block" id="btn-agregar-renglon">
+                  + Agregar al Comprobante
+                </button>
+              </div>
+
+              <!-- Renglones de venta -->
+              <div class="card">
+                <h3 class="card-title">Renglones a Liquidar</h3>
+                <div class="table-responsive" id="borrador-table-container">
+                  <table class="table" id="tabla-borrador-venta">
+                    <thead>
+                      <tr>
+                        <th scope="col">Libro</th>
+                        <th scope="col">Precio</th>
+                        <th scope="col">Cant.</th>
+                        <th scope="col">Subtotal</th>
+                        <th scope="col">Acción</th>
+                      </tr>
+                    </thead>
+                    <tbody id="borrador-table-body"></tbody>
+                  </table>
+                </div>
+
+                <div class="ventas-summary-box">
+                  <div class="ventas-total-row">
+                    <span class="ventas-total-label">Total a Facturar:</span>
+                    <span class="ventas-total-amount" id="venta-total-general">$0.00</span>
+                  </div>
+                  <div class="ventas-actions">
+                    <button type="button" class="btn btn-primary btn-lg btn-block" id="btn-confirmar-venta">
+                      Confirmar y Emitir Venta
+                    </button>
+                  </div>
+                </div>
+
+                <div id="venta-confirmada-resumen" style="display: none; margin-top: 1rem;"></div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+
+        <!-- Vista 5: Historial -->
+        <section id="historial" class="view-section" aria-labelledby="title-historial">
+          <header class="view-header">
+            <h2 id="title-historial" class="view-title" tabindex="-1">Historial de Ventas</h2>
+            <p class="view-description">Auditoría inmutable de comprobantes comerciales emitidos y valores facturados.</p>
+          </header>
+          <div class="view-content" id="historial-content">
+            <div class="historial-container">
+              <div id="historial-state" aria-live="polite"></div>
+              <div class="table-responsive" id="historial-table-container">
+                <table class="table" id="tabla-historial-ventas">
+                  <thead>
+                    <tr>
+                      <th scope="col">Comprobante #</th>
+                      <th scope="col">Fecha y Hora</th>
+                      <th scope="col">Cliente ID</th>
+                      <th scope="col">Total Facturado</th>
+                      <th scope="col">Acción</th>
+                    </tr>
+                  </thead>
+                  <tbody id="historial-table-body"></tbody>
+                </table>
+              </div>
+
+              <div class="pagination-bar" id="historial-pagination" hidden>
+                <span class="pagination-info" id="historial-pagination-info">Mostrando página 1</span>
+                <div class="pagination-controls">
+                  <button type="button" class="btn btn-secondary btn-pagination" id="btn-historial-prev" disabled>
+                    &larr; Anterior
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-pagination" id="btn-historial-next" disabled>
+                    Siguiente &rarr;
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </main>
+
+    <!-- Navbar Inferior Móvil (Dock Flotante Redondeado) -->
+    <nav class="mobile-bottom-nav" aria-label="Navegación móvil">
+      <a href="#catalogo" class="mobile-nav-link active" id="mob-nav-catalogo">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect width="7" height="7" x="3" y="3" rx="1"></rect>
+          <rect width="7" height="7" x="14" y="3" rx="1"></rect>
+          <rect width="7" height="7" x="14" y="14" rx="1"></rect>
+          <rect width="7" height="7" x="3" y="14" rx="1"></rect>
+        </svg>
+        <span>Catálogo</span>
+      </a>
+      <a href="#libros" class="mobile-nav-link" id="mob-nav-libros">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z"></path>
+        </svg>
+        <span>Libros</span>
+      </a>
+      <a href="#clientes" class="mobile-nav-link" id="mob-nav-clientes">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+          <circle cx="9" cy="7" r="4"></circle>
+        </svg>
+        <span>Clientes</span>
+      </a>
+      <a href="#ventas" class="mobile-nav-link" id="mob-nav-ventas">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="8" cy="21" r="1"></circle>
+          <circle cx="19" cy="21" r="1"></circle>
+          <path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"></path>
+        </svg>
+        <span>Ventas</span>
+      </a>
+      <a href="#historial" class="mobile-nav-link" id="mob-nav-historial">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path>
+          <path d="M3 3v5h5"></path>
+        </svg>
+        <span>Historial</span>
+      </a>
+    </nav>
+
+    <!-- Modal Accesible: Detalle de Libro y Autorías (Con Chips Atómicos) -->
+    <dialog id="modal-libro-detalle" class="app-modal" aria-labelledby="modal-libro-titulo">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h3 id="modal-libro-titulo" class="modal-title">Detalle del Libro</h3>
+          <div class="modal-meta-pills" id="modal-libro-pills"></div>
         </div>
-      </section>
+        <button type="button" class="btn-close-modal" id="btn-cerrar-modal-libro" aria-label="Cerrar ventana">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-libro-contenido"></div>
+      <div class="modal-footer">
+        <span class="modal-tip">Presiona <kbd>Esc</kbd> o toca afuera para cerrar</span>
+        <button type="button" class="btn btn-secondary" id="btn-modal-libro-ok">Cerrar</button>
+      </div>
+    </dialog>
 
-    </div>
-  </main>
+    <!-- Modal Accesible: Comprobante de Venta -->
+    <dialog id="modal-venta-detalle" class="app-modal" aria-labelledby="modal-venta-titulo">
+      <div class="modal-header">
+        <div class="modal-title-group">
+          <h3 id="modal-venta-titulo" class="modal-title">Comprobante de Venta</h3>
+          <div class="modal-meta-pills" id="modal-venta-pills"></div>
+        </div>
+        <button type="button" class="btn-close-modal" id="btn-cerrar-modal-venta" aria-label="Cerrar ventana">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-venta-contenido"></div>
+      <div class="modal-footer">
+        <span class="modal-tip">Comprobante inmutable</span>
+        <button type="button" class="btn btn-primary" id="btn-modal-venta-ok">Entendido</button>
+      </div>
+    </dialog>
 
-  <!-- Modal Accesible Centrado: Detalle de Libro y Autorías -->
-  <dialog id="modal-libro-detalle" class="app-modal" aria-labelledby="modal-libro-titulo">
-    <div class="modal-header">
-      <h3 id="modal-libro-titulo" class="modal-title">Detalle del Libro</h3>
-      <button type="button" class="btn-close-modal" id="btn-cerrar-modal-libro" aria-label="Cerrar ventana">&times;</button>
-    </div>
-    <div class="modal-body" id="modal-libro-contenido">
-      <!-- Se puebla dinámicamente -->
-    </div>
-    <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" id="btn-modal-libro-ok">Cerrar</button>
-    </div>
-  </dialog>
+    <!-- Pie de página institucional -->
+    <footer class="app-footer" role="contentinfo">
+      <div class="footer-container">
+        <p class="footer-text">&copy; 2026 Librería Central — Programación III (UTN FRM)</p>
+        <p class="footer-meta">Sistema Integral de Gestión Editorial · Interfaz Web Accesible (WCAG AA)</p>
+      </div>
+    </footer>
 
-  <!-- Modal Accesible Centrado: Detalle Histórico de Venta -->
-  <dialog id="modal-venta-detalle" class="app-modal" aria-labelledby="modal-venta-titulo">
-    <div class="modal-header">
-      <h3 id="modal-venta-titulo" class="modal-title">Comprobante de Venta</h3>
-      <button type="button" class="btn-close-modal" id="btn-cerrar-modal-venta" aria-label="Cerrar ventana">&times;</button>
-    </div>
-    <div class="modal-body" id="modal-venta-contenido">
-      <!-- Se puebla dinámicamente -->
-    </div>
-    <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" id="btn-modal-venta-ok">Cerrar</button>
-    </div>
-  </dialog>
-
-  <!-- Pie de página institucional -->
-  <footer class="app-footer" role="contentinfo">
-    <div class="footer-container">
-      <p class="footer-text">&copy; 2026 Librería Central — Programación III (UTN FRM)</p>
-      <p class="footer-meta">Sistema Integral de Gestión Editorial · Interfaz Web Accesible (WCAG AA)</p>
-    </div>
-  </footer>
+  </div> <!-- Fin simulator-phone-shell -->
 </body>
 </html>

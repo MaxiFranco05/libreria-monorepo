@@ -41,7 +41,7 @@
    * @param {string} activeRoute - ID de la ruta activa
    */
   function updateNavLinks(activeRoute) {
-    const navLinks = document.querySelectorAll('.app-nav .nav-link');
+    const navLinks = document.querySelectorAll('.desktop-nav .nav-link, .mobile-bottom-nav .mobile-nav-link');
     const targetHash = `#${activeRoute}`;
 
     navLinks.forEach((link) => {

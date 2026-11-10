@@ -31,10 +31,12 @@
   async function showSaleDetail(ventaId) {
     const modal = document.getElementById('modal-venta-detalle');
     const modalTitle = document.getElementById('modal-venta-titulo');
+    const modalPills = document.getElementById('modal-venta-pills');
     const modalBody = document.getElementById('modal-venta-contenido');
     if (!modal || !modalBody) return;
 
     modalTitle.textContent = `Comprobante de Venta #${ventaId}`;
+    if (modalPills) modalPills.innerHTML = '';
     modalBody.innerHTML = `
       <div style="text-align: center; padding: 2rem;">
         <p style="color: var(--text-secondary);">Cargando comprobante comercial...</p>
@@ -49,59 +51,68 @@
       const formatCurrency = root.LibreriaApp.formatters?.formatCurrency || ((v) => `$${Number(v).toFixed(2)}`);
       const formatDateTime = root.LibreriaApp.formatters?.formatDateTime || ((v) => String(v));
 
+      if (modalPills) {
+        modalPills.innerHTML = `
+          <span class="meta-pill">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="18" height="18" x="3" y="4" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            ${formatDateTime(venta.fecha)}
+          </span>
+          <span class="meta-pill">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            Cliente: ${escapeHtml(venta.cliente?.nombre || 'ID #' + venta.cliente_id)}
+          </span>
+        `;
+      }
+
       const renglones = Array.isArray(venta.renglones) ? venta.renglones : [];
 
       modalBody.innerHTML = `
         <div style="display: flex; flex-direction: column; gap: 1rem;">
-          <div style="background: var(--bg-surface-alt); padding: 1rem; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; font-size: 0.95rem;">
-              <div><strong>Comprobante N°:</strong> #${venta.id}</div>
-              <div><strong>Fecha y Hora:</strong> ${formatDateTime(venta.fecha)}</div>
-              <div><strong>Cliente Comprador:</strong> ${escapeHtml(venta.cliente?.nombre || 'N/D')}</div>
-              <div><strong>Correo:</strong> <code>${escapeHtml(venta.cliente?.email || 'N/D')}</code></div>
-            </div>
-          </div>
-
-          <div>
-            <h4 style="margin-bottom: 0.5rem; color: var(--accent-navy);">Detalle de Artículos y Valores Facturados:</h4>
-            <div class="table-responsive">
-              <table class="table" style="font-size: 0.9rem;">
-                <thead>
+          <div class="editorial-section-title">Detalle de Renglones Facturados</div>
+          <div class="table-responsive">
+            <table class="table" style="font-size: 0.85rem;">
+              <thead>
+                <tr>
+                  <th>Ejemplar</th>
+                  <th style="text-align: center;">Cantidad</th>
+                  <th style="text-align: right;">Unitario</th>
+                  <th style="text-align: right;">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${renglones.map((r) => `
                   <tr>
-                    <th>Libro ID</th>
-                    <th>Título del Libro</th>
-                    <th>Cant.</th>
-                    <th>Precio Unitario</th>
-                    <th>Subtotal</th>
+                    <td><strong>${escapeHtml(r.titulo)}</strong></td>
+                    <td style="text-align: center; font-family: var(--font-family-mono);">${r.cantidad} u.</td>
+                    <td style="text-align: right; font-family: var(--font-family-mono);">${formatCurrency(r.precio_unitario)}</td>
+                    <td style="text-align: right; font-family: var(--font-family-mono); font-weight: 600;">${formatCurrency(r.subtotal)}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  ${renglones.map((r) => `
-                    <tr>
-                      <td>#${r.libro_id}</td>
-                      <td><strong>${escapeHtml(r.titulo)}</strong></td>
-                      <td>${r.cantidad} u.</td>
-                      <td>${formatCurrency(r.precio_unitario)}</td>
-                      <td style="font-weight: 600;">${formatCurrency(r.subtotal)}</td>
-                    </tr>
-                  `).join('')}
-                </tbody>
-                <tfoot>
-                  <tr style="background: var(--bg-surface-alt); font-weight: 700; font-size: 1rem;">
-                    <td colspan="4" style="text-align: right;">Total Facturado:</td>
-                    <td style="color: var(--color-success); font-size: 1.15rem;">${formatCurrency(venta.total)}</td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+                `).join('')}
+              </tbody>
+              <tfoot>
+                <tr style="background: var(--bg-surface-alt); font-weight: 700; font-size: 0.95rem;">
+                  <td colspan="3" style="text-align: right;">Total Liquidado:</td>
+                  <td style="text-align: right; color: var(--accent-primary); font-family: var(--font-family-mono); font-size: 1.15rem;">${formatCurrency(venta.total)}</td>
+                </tr>
+              </tfoot>
+            </table>
           </div>
 
-          <div style="font-size: 0.85rem; color: var(--text-muted); font-style: italic;">
-            Comprobante inmutable. Los importes reflejan con fidelidad las condiciones comerciales vigentes al momento de la emisión.
+          <div style="font-size: 0.775rem; color: var(--text-muted); font-style: italic;">
+            Comprobante inmutable auditado contra la base de datos PostgreSQL.
           </div>
         </div>
       `;
     } catch (err) {
+      if (modalPills) modalPills.innerHTML = '';
       modalBody.innerHTML = `<div class="state-box state-error"><p>Error consultando comprobante: ${escapeHtml(err.message)}</p></div>`;
     }
   }
