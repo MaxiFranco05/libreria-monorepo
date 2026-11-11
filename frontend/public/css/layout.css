@@ -489,3 +489,104 @@
   pointer-events: none;
   flex-shrink: 0;
 }
+
+/* ==========================================================================
+   Modo Móvil Forzado (URL ?simulated_mobile=true)
+   Garantiza que la UI sea 100% móvil y táctil en ventana independiente o tab
+   ========================================================================== */
+html[data-simulated-mobile="true"] .desktop-nav {
+  display: none !important;
+}
+
+html[data-simulated-mobile="true"] .mobile-bottom-nav {
+  display: flex !important;
+}
+
+html[data-simulated-mobile="true"] #simulator-toggle,
+html[data-simulated-mobile="true"] .btn-simulator-toggle {
+  display: none !important;
+}
+
+/* Reglas de contenido móvil forzadas cuando simulated_mobile=true */
+html[data-simulated-mobile="true"] .catalogo-grid {
+  grid-template-columns: 1fr !important;
+  gap: 1.15rem !important;
+}
+
+html[data-simulated-mobile="true"] .view-grid-two-cols {
+  grid-template-columns: 1fr !important;
+  gap: 1.25rem !important;
+}
+
+html[data-simulated-mobile="true"] .ventas-workflow-grid {
+  grid-template-columns: 1fr !important;
+  gap: 1.25rem !important;
+}
+
+html[data-simulated-mobile="true"] .table {
+  min-width: 620px !important;
+}
+
+html[data-simulated-mobile="true"] .footer-container {
+  flex-direction: column !important;
+  text-align: center !important;
+}
+
+/* En caso de que se abra en una pestaña de escritorio ancha (> 480px),
+   encuadrar la aplicación centrada en un chasis móvil de 390px */
+@media (min-width: 481px) {
+  html[data-simulated-mobile="true"] {
+    background-color: #07090E !important;
+  }
+
+  html[data-simulated-mobile="true"] body {
+    background-color: #07090E !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: flex-start !important;
+    min-height: 100vh !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  html[data-simulated-mobile="true"] .app-layout {
+    width: 390px !important;
+    max-width: 390px !important;
+    min-height: 100vh !important;
+    background-color: var(--bg-primary) !important;
+    box-shadow: 0 0 60px rgba(0, 0, 0, 0.85), 0 0 0 1px var(--border-color) !important;
+    position: relative !important;
+    margin: 0 auto !important;
+    flex: 0 0 390px !important;
+  }
+
+  html[data-simulated-mobile="true"] .header-wrapper {
+    max-width: 390px !important;
+    width: 100% !important;
+    padding: 0.6rem 0.75rem 0.4rem !important;
+  }
+
+  html[data-simulated-mobile="true"] .content-container,
+  html[data-simulated-mobile="true"] .footer-container {
+    max-width: 390px !important;
+    width: 100% !important;
+    padding: 0 0.85rem !important;
+  }
+
+  html[data-simulated-mobile="true"] .mobile-bottom-nav {
+    max-width: 366px !important;
+    width: calc(390px - 1.5rem) !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+  }
+
+  html[data-simulated-mobile="true"] dialog.app-modal[open] {
+    width: min(370px, 94vw) !important;
+    max-width: 370px !important;
+  }
+
+  html[data-simulated-mobile="true"] .modal-form-row-two-cols {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+  }
+}

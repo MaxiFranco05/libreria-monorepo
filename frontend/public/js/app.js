@@ -109,13 +109,23 @@
 
   function openSimulatorInNewTab() {
     const iframe = document.getElementById('simulator-iframe');
-    let targetUrl = window.location.href;
+    let targetHash = window.location.hash || '#catalogo';
     if (iframe && iframe.contentWindow) {
       try {
-        targetUrl = iframe.contentWindow.location.href || targetUrl;
+        targetHash = iframe.contentWindow.location.hash || targetHash;
       } catch (e) {}
     }
-    window.open(targetUrl, '_blank');
+    const targetUrl = `${window.location.origin}${window.location.pathname}?simulated_mobile=true${targetHash}`;
+    const width = 390;
+    const height = 844;
+    const left = Math.round((window.screen.availWidth - width) / 2);
+    const top = Math.round((window.screen.availHeight - height) / 2);
+    const popupFeatures = `popup=yes,width=${width},height=${height},left=${left},top=${top},resizable=yes,scrollbars=yes,status=no,toolbar=no,menubar=no,location=no`;
+
+    const popup = window.open(targetUrl, 'LibreriaLocalHostMobile', popupFeatures);
+    if (popup && popup.focus) {
+      popup.focus();
+    }
   }
 
   root.toggleDeviceSimulator = toggleDeviceSimulator;
@@ -131,7 +141,13 @@
   window.openSimulatorInNewTab = openSimulatorInNewTab;
 
   // Prevención de recursión y emulación táctil en modo móvil simulado
-  const isInsideSimulator = window.self !== window.top || window.location.search.includes('simulated_mobile=true');
+  const isSimulatedMobile = window.location.search.includes('simulated_mobile=true');
+  const isInsideSimulator = window.self !== window.top || isSimulatedMobile;
+
+  if (isSimulatedMobile) {
+    document.documentElement.setAttribute('data-simulated-mobile', 'true');
+  }
+
   if (isInsideSimulator) {
     const simBtn = document.getElementById('simulator-toggle');
     if (simBtn) simBtn.style.display = 'none';
