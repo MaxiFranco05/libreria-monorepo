@@ -10,8 +10,11 @@
 
 ## 1. Datos Generales del Despliegue
 
-- **URL Pública del Servicio (Frontend HTTPS)**: `https://libreria-global.maxifranco.lat` *(o dominio asignado por Easypanel)*
-- **Endpoint de Verificación de Salud**: `https://libreria-global.maxifranco.lat/api/health/ready`
+- **URL Pública del Servicio (Principal)**: `https://api.libreria.maximofranco.me`
+- **URL Pública del Servicio (Alternativa Easypanel)**: `https://localhost-parcial-libreria.oyerue.easypanel.host`
+- **IP Pública del Servidor VPS**: `179.199.130.181`
+- **Swagger / OpenAPI Docs**: `https://api.libreria.maximofranco.me/docs` (o `https://localhost-parcial-libreria.oyerue.easypanel.host/docs`)
+- **Endpoint de Verificación de Salud**: `https://api.libreria.maximofranco.me/health/ready`
 - **Revisión del Repositorio**: Rama `main` / `master` (Monorepo `libreria-monorepo`)
 - **Plataforma de Despliegue**: Servidor VPS Ubuntu Server 24.04 LTS (x86_64) administrado mediante **Easypanel**
 - **Motor de Contenedores**: Docker Engine 26+ / Buildx
@@ -131,7 +134,7 @@ Las variables sensibles se definen exclusivamente en el panel privado de Easypan
 4. En la pestaña **Environment**:
    - Configurar `API_UPSTREAM=<nombreproyecto_backend>:8000` (ejemplo: `libreria-global_backend:8000`).
 5. En la pestaña **Domains**:
-   - Agregar el dominio asignado por la cátedra o tu subdominio (ej: `libreria-global.maxifranco.lat`).
+   - Agregar el dominio asignado por la cátedra o tu subdominio (ej: `api.libreria.maximofranco.me`).
    - Puerto de destino: `80`.
    - Protocolo interno: `HTTP`.
    - Dejar activada la generación automática de certificados SSL con Let's Encrypt (HTTPS).

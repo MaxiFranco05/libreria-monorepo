@@ -2,6 +2,7 @@ import pytest
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 from fastapi import HTTPException
+from app.core.exceptions import DomainError
 
 # Import all models to resolve SQLAlchemy forward relationships
 import app.main
@@ -34,7 +35,7 @@ async def test_crear_venta_stock_insuficiente_lanza_409():
     )
     background_tasks = MagicMock()
 
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises((HTTPException, DomainError)) as exc_info:
         await crear_venta(mock_session, data, background_tasks)
 
     assert exc_info.value.status_code == 409

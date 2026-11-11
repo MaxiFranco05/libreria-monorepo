@@ -2,6 +2,7 @@ import pytest
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 from fastapi import HTTPException
+from app.core.exceptions import DomainError
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
@@ -61,7 +62,7 @@ async def test_update_libro_inexistente_lanza_404():
     payload = LibroUpdate(stock=15)
 
     # Act & Assert
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises((HTTPException, DomainError)) as exc_info:
         await update_libro(mock_session, 999, payload)
 
     assert exc_info.value.status_code == 404
@@ -163,7 +164,7 @@ async def test_update_libro_isbn_duplicado_lanza_409():
     payload = LibroUpdate(isbn="978-950-04-2455-4")
 
     # Act & Assert
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises((HTTPException, DomainError)) as exc_info:
         await update_libro(mock_session, 1, payload)
 
     mock_session.rollback.assert_awaited_once()

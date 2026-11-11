@@ -1,6 +1,7 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
 from fastapi import HTTPException
+from app.core.exceptions import DomainError
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
 
@@ -56,7 +57,7 @@ async def test_actualizar_cliente_inexistente_lanza_404():
     payload = ClienteUpdate(nombre="Nuevo Nombre")
 
     # Act & Assert
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises((HTTPException, DomainError)) as exc_info:
         await actualizar_cliente(mock_session, 999, payload)
 
     assert exc_info.value.status_code == 404
@@ -85,7 +86,7 @@ async def test_actualizar_cliente_email_duplicado_lanza_409():
     payload = ClienteUpdate(email="existente@correo.com")
 
     # Act & Assert
-    with pytest.raises(HTTPException) as exc_info:
+    with pytest.raises((HTTPException, DomainError)) as exc_info:
         await actualizar_cliente(mock_session, 1, payload)
 
     mock_session.rollback.assert_awaited_once()

@@ -23,6 +23,7 @@
   ]);
 
   const DEFAULT_ROUTE = 'catalogo';
+  let isInitialLoad = true;
 
   /**
    * Extrae y normaliza el ID de ruta a partir del hash actual de la URL
@@ -73,13 +74,14 @@
       }
     });
 
-    // Accesibilidad: transferir el foco al encabezado principal de la vista activa
-    if (activeSection) {
+    // Accesibilidad: transferir el foco al encabezado principal solo ante navegaciones activas (no al iniciar la app)
+    if (activeSection && !isInitialLoad) {
       const heading = activeSection.querySelector('h2');
       if (heading) {
         heading.focus({ preventScroll: true });
       }
     }
+    isInitialLoad = false;
 
     // Notificar a la vista activa para que refresque sus datos desde la API si corresponde
     const views = window.LibreriaApp && window.LibreriaApp.views;

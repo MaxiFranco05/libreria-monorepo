@@ -267,6 +267,13 @@
   font-size: clamp(1.6rem, 3.5vw, 2.15rem);
   color: var(--text-primary);
   margin-bottom: 0.35rem;
+  outline: none !important;
+}
+
+.view-title:focus,
+.view-title:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .view-description {
@@ -305,7 +312,7 @@
 
 /* --------------------------------------------------------------------------
    Simulador de Dispositivo Móvil (Academic Defense Showcase)
-   Iframe sandbox de 390px adaptable a la altura real del navegador (100vh)
+   Iframe sandbox con chasis nativo de iPhone 14 adaptado a la altura del viewport
    -------------------------------------------------------------------------- */
 .device-simulator-overlay {
   display: none;
@@ -313,13 +320,13 @@
   inset: 0;
   z-index: 99999;
   background-color: rgba(5, 7, 10, 0.88);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   align-items: center;
   justify-content: center;
-  flex-direction: column;
-  padding: 0.65rem 1rem;
-  overflow: hidden;
+  padding: 0.5rem;
+  overflow: hidden !important; /* Previene scroll horizontal y vertical del overlay */
+  box-sizing: border-box;
 }
 
 .device-simulator-overlay.active {
@@ -332,49 +339,137 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0.55rem;
+  gap: 0.4rem;
   position: relative;
+  max-width: 100%;
   max-height: 100%;
-  width: 100%;
+  height: 100%;
+  user-select: none;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
+/* Barra de control exterior superior compacta (siempre en una sola línea de 32px) */
+.simulator-top-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 414px;
+  height: 32px;
+  gap: 0.35rem;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.simulator-device-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(15, 23, 42, 0.9);
+  color: #94A3B8;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0.25rem 0.55rem;
+  border-radius: var(--radius-pill);
+  font-family: var(--font-family-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+.simulator-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.simulator-tool-btn,
 .simulator-exit-btn {
-  background-color: rgba(30, 35, 45, 0.96);
-  color: #F8FAFC;
-  border: 1px solid rgba(255, 255, 255, 0.22);
-  padding: 0.4rem 1.1rem;
+  background-color: rgba(15, 23, 42, 0.92);
+  color: #E2E8F0;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  padding: 0.25rem 0.55rem;
   border-radius: var(--radius-pill);
   font-family: var(--font-family-body);
-  font-size: 0.82rem;
+  font-size: 0.74rem;
   font-weight: 600;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.3rem;
+  white-space: nowrap;
   flex-shrink: 0;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
   transition: all var(--transition-fast);
 }
 
+.simulator-tool-btn:hover,
 .simulator-exit-btn:hover {
-  background-color: #374151;
+  background-color: rgba(30, 41, 59, 0.98);
   color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.28);
   transform: translateY(-1px);
 }
 
+.simulator-tool-close {
+  background-color: rgba(239, 68, 68, 0.16);
+  color: #FCA5A5;
+  border-color: rgba(239, 68, 68, 0.38);
+}
+
+.simulator-tool-close:hover {
+  background-color: rgba(239, 68, 68, 0.88);
+  color: #FFFFFF;
+  border-color: rgba(239, 68, 68, 1);
+}
+
+.simulator-kbd {
+  font-family: var(--font-family-mono);
+  font-size: 0.65rem;
+  padding: 0.1rem 0.35rem;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.12);
+  color: inherit;
+  margin-left: 0.15rem;
+}
+
+/* Chasis exterior físico de teléfono */
+.simulator-phone-chassis {
+  width: min(414px, calc(100vw - 1.5rem));
+  background: #0B0F17;
+  border: 4px solid rgba(148, 163, 184, 0.28);
+  outline: 6px solid #0F172A;
+  border-radius: 44px;
+  box-shadow:
+    0 25px 60px -15px rgba(0, 0, 0, 0.95),
+    0 0 0 1px rgba(255, 255, 255, 0.08);
+  padding: 6px 6px 4px 6px;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 1;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+/* Pantalla interior con relación de aspecto nativa (390x844) adaptable al 100vh */
 .simulator-screen-bezel {
-  width: min(410px, calc(100vw - 2rem));
+  width: min(390px, 100%);
   height: min(844px, calc(100vh - 4.25rem));
   height: min(844px, calc(100dvh - 4.25rem));
   background-color: #000000;
-  border: 10px solid #1E232D;
-  border-radius: 42px;
-  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 0 2px rgba(255, 255, 255, 0.1);
+  border-radius: 36px;
   overflow: hidden;
   position: relative;
   display: flex;
   flex-direction: column;
-  flex-shrink: 1;
+  box-sizing: border-box;
+  flex-shrink: 0;
+  min-height: 0;
 }
 
 .simulator-iframe {
@@ -382,4 +477,15 @@
   height: 100%;
   border: none;
   background-color: var(--bg-primary);
+}
+
+/* Home Indicator Bar estilo iOS en la base */
+.simulator-home-bar {
+  width: 120px;
+  height: 4px;
+  background-color: rgba(255, 255, 255, 0.32);
+  border-radius: 9999px;
+  margin: 6px auto 2px auto;
+  pointer-events: none;
+  flex-shrink: 0;
 }
