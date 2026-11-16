@@ -10,15 +10,13 @@
 
 ## 1. Datos Generales del Despliegue
 
-- **URL Pública del Servicio (Principal)**: `https://api.libreria.maximofranco.me`
-- **URL Pública del Servicio (Alternativa Easypanel)**: `https://localhost-parcial-libreria.oyerue.easypanel.host`
-- **IP Pública del Servidor VPS**: `179.199.130.181`
-- **Swagger / OpenAPI Docs**: `https://api.libreria.maximofranco.me/docs` (o `https://localhost-parcial-libreria.oyerue.easypanel.host/docs`)
-- **Endpoint de Verificación de Salud**: `https://api.libreria.maximofranco.me/health/ready`
-- **Revisión del Repositorio**: Rama `main` / `master` (Monorepo `libreria-monorepo`)
-- **Plataforma de Despliegue**: Servidor VPS Ubuntu Server 24.04 LTS (x86_64) administrado mediante **Easypanel**
-- **Motor de Contenedores**: Docker Engine 26+ / Buildx
-- **Base de Datos**: PostgreSQL 16 (Servicio Gestionado interno de Easypanel)
+- **URL Pública del Servicio (Principal)**: `https://libreria.maximofranco.me` (Nginx `1.30.6` sirve la SPA en `/` y hace proxy de `/api/` hacia el backend interno)
+- **IP Pública del Servidor VPS (DNS A)**: `179.199.130.181`
+- **Swagger / OpenAPI Docs**: `https://libreria.maximofranco.me/api/docs` (spec OpenAPI JSON en `/api/openapi.json`)
+- **Endpoints de Verificación de Salud**: `https://libreria.maximofranco.me/api/health/ready` (`{"estado":"listo"}`) y `https://libreria.maximofranco.me/api/health/live` (`{"estado":"vivo"}`)
+- **Revisión del Repositorio**: Rama `main`, commit desplegado en producción `c5e3190` (`Last-Modified: Wed, 11 Nov 2026 18:11:08 GMT`)
+- **Plataforma de Despliegue**: Servidor VPS administrado mediante **Easypanel** (red interna Docker entre PostgreSQL 16, `backend` interno y `frontend` público)
+- **Base de Datos**: PostgreSQL 16 (Servicio interno gestionado en Easypanel)
 
 ---
 
@@ -134,7 +132,7 @@ Las variables sensibles se definen exclusivamente en el panel privado de Easypan
 4. En la pestaña **Environment**:
    - Configurar `API_UPSTREAM=<nombreproyecto_backend>:8000` (ejemplo: `libreria-global_backend:8000`).
 5. En la pestaña **Domains**:
-   - Agregar el dominio asignado por la cátedra o tu subdominio (ej: `api.libreria.maximofranco.me`).
+   - Agregar el dominio público del frontend (`libreria.maximofranco.me`) y mantener el servicio `backend` **solo interno** (sin dominio público automático).
    - Puerto de destino: `80`.
    - Protocolo interno: `HTTP`.
    - Dejar activada la generación automática de certificados SSL con Let's Encrypt (HTTPS).
@@ -146,17 +144,15 @@ Las variables sensibles se definen exclusivamente en el panel privado de Easypan
 
 ## 5. Verificación de Salud en Producción
 
-1. Abrir en el navegador:
-   `https://<dominio-publico>/api/health/ready`
-   **Respuesta esperada (HTTP 200)**:
+1. Abrir en el navegador o consultar con `curl`:
+   `https://libreria.maximofranco.me/api/health/ready`
+   **Respuesta verificada (HTTP 200)**:
    ```json
-   {
-     "status": "ok",
-     "database": "connected"
-   }
+   {"estado":"listo"}
    ```
+   Complementariamente, `https://libreria.maximofranco.me/api/health/live` responde `HTTP 200` con `{"estado":"vivo"}`.
 2. Abrir la URL raíz:
-   `https://<dominio-publico>/`
+   `https://libreria.maximofranco.me/`
    Verificar que la SPA carga el catálogo con los libros poblados por el seed.
 
 ---
@@ -177,39 +173,39 @@ Dado que la base de datos PostgreSQL corre en un servicio independiente con vol�
 
 ## 7. Registro de Casos de Prueba (G-01 a G-07)
 
-Se documenta la ejecución de las 7 pruebas funcionales exigidas sobre el despliegue:
+Se documenta la ejecución real de las 7 pruebas funcionales exigidas sobre el despliegue público `https://libreria.maximofranco.me` (IP `179.199.130.181`, servidor `nginx/1.30.6`, commit `c5e3190`). Las salidas HTTP completas constan en [`evidencia/README.md`](evidencia/README.md).
 
 ### G-01 · Catálogo
-- **Acción**: Ingresar a la sección Catálogo, buscar por título parcial "Ficciones", probar mayúsculas/minúsculas ("ficciones"), cambiar paginación con Anterior/Siguiente y buscar un término inexistente ("LibroInexistenteXYZ"). Luego hacer clic en "Ver Autores" en una tarjeta.
-- **Resultado Observado**: Búsqueda reactiva instantánea, paginación con `offset` reiniciado al cambiar filtro, despliegue del estado "Sin coincidencias", y apertura del modal con autores y roles consultados desde `GET /libros/{id}`.
-- **Evidencia**: `evidencia/g01_catalogo.png`.
+- **Acción**: Ingresar a la sección Catálogo (`#catalogo`), navegar paginación (`GET /api/libros/?limit=12&offset=0` → `offset=12`), buscar por título en minúsculas `"ficciones"` (`offset` reiniciado a `0`), abrir "Ver Autores" en el libro ID `7` (`GET /api/libros/7`) y buscar un término inexistente (`"LibroInexistenteXYZ"`).
+- **Resultado Observado**: Paginación devuelve `200 OK` (12 libros en página 2, IDs `13`–`24`); el filtro `"ficciones"` encuentra `"Ficciones"` y el modal muestra autor `#1 Jorge Luis Borges (Argentina)` (`rol: autor`, `orden: 1`); `"LibroInexistenteXYZ"` devuelve `[]` (`200 OK`) y muestra el estado `"Sin coincidencias"`.
+- **Evidencia**: `evidencia/g01_catalogo_paginacion.png`, `evidencia/g01_catalogo_detalle_autores.png`, `evidencia/g01_catalogo_sin_coincidencias.png`.
 
 ### G-02 · Alta de Libro
-- **Acción**: Ingresar a la sección Libros, completar título "Rayuela", ISBN "9789500424559", precio 3500.00, stock 15, editorial "Editorial Sudamericana", género "Ficción". En autorías, verificar autor ID 1 mediante `GET /autores/1` ("Jorge Luis Borges"), agregar autoría con rol "autor" y orden 1. Enviar el formulario. Reintentar enviar el mismo ISBN.
-- **Resultado Observado**: Primer envío responde **201 Created**, el libro se incorpora al catálogo y a la tabla de libros. En el segundo envío con el mismo ISBN, el backend responde **409 Conflict** y la interfaz muestra el error del servidor sin perder los datos del formulario.
-- **Evidencia**: `evidencia/g02_alta_libro.png`.
+- **Acción**: En `#libros`, verificar por ID a los autores `#1` (`GET /api/autores/1` → `"Jorge Luis Borges"`) y `#2` (`GET /api/autores/2` → `"Julio Cortázar"`). Registrar el libro `"Antología del Río"`, ISBN `"978-950-88-1511-1"`, precio `1500.00`, stock `15`, editorial `2` (`Editorial Sudamericana`), género `null` (`«Sin clasificar»`), autorías `#1` (`autor`, orden 1) y `#2` (`coautor`, orden 2). Consultar el detalle del Libro `#29` (`GET /api/libros/29`) y reintentar crear el libro con el mismo ISBN.
+- **Resultado Observado**: Alta exitosa (`POST /api/libros/` → `201 Created`) asignando el ID `29`; el detalle muestra editorial, estado sin clasificar y ambas autorías; el reintento con ISBN duplicado responde `409 Conflict` (`{"detail":"Ya existe un libro con ese ISBN"}`) y la interfaz conserva el borrador mostrando el error.
+- **Evidencia**: `evidencia/g02_alta_libro_detalle.png`, `evidencia/g02_alta_libro_409.png`.
 
 ### G-03 · Alta de Cliente
-- **Acción**: Ingresar a Clientes, crear cliente con nombre "Ana García" y email "ana.garcia@gmail.com". Luego consultar en el buscador individual por ID con `GET /clientes/{id}`. Reintentar registrar un cliente con el mismo email.
-- **Resultado Observado**: Primer alta exitosa (**201 Created**). La consulta individual por ID recupera el nombre y correo exactos. El segundo intento con el email duplicado es rechazado con **409 Conflict** mostrando el mensaje correspondiente.
-- **Evidencia**: `evidencia/g03_alta_cliente.png`.
+- **Acción**: En `#clientes`, registrar el cliente `"Roberto Sánchez"` con email `"roberto.sanchez.global@test.com"` y consultarlo por ID en el buscador individual (`GET /api/clientes/12`). Luego reintentar registrar otro cliente con el mismo correo.
+- **Resultado Observado**: Primer envío responde `201 Created` (Cliente ID `12`); la consulta `GET /api/clientes/12` responde `200 OK` recuperando nombre y email exactos; el reintento con email duplicado devuelve `409 Conflict` (`{"detail":"Email ya registrado"}`).
+- **Evidencia**: `evidencia/g03_alta_cliente_ok.png`, `evidencia/g03_alta_cliente_409.png`.
 
 ### G-04 · Venta
-- **Acción**: Ingresar a Ventas, seleccionar el cliente ID 1, agregar 2 libros distintos (Libro 1 con cantidad 2, Libro 2 con cantidad 1). Pulsar "Confirmar Venta".
-- **Resultado Observado**: Botón se deshabilita durante el envío. El backend responde **201 Created**. La interfaz muestra el resumen con los precios unitarios del catálogo copiados, subtotales y total general devuelto por la API. El borrador se limpia automáticamente y el historial se actualiza.
-- **Evidencia**: `evidencia/g04_venta.png`.
+- **Acción**: En `#ventas`, seleccionar Cliente `#12` (`Roberto Sánchez`) y agregar 2 renglones: Libro `#29` (`Antología del Río`, cantidad `2`, unitario `$1500.00`) y Libro `#1` (`El Aleph`, cantidad `1`, unitario `$45.00`). Confirmar venta (`POST /api/ventas/`), recargar la página completa e inspeccionar el comprobante en `#historial` (`GET /api/ventas/26`).
+- **Resultado Observado**: La API responde `201 Created` creando el Comprobante `#26` por `$3045.00` (`$3000.00` + `$45.00`) y limpiando el borrador automáticamente; tras recargar completamente la SPA, el comprobante `#26` conserva idénticos renglones, cantidades, precios unitarios y total.
+- **Evidencia**: `evidencia/g04_venta_confirmada.png`, `evidencia/g04_venta_historial_post_reload.png`.
 
 ### G-05 · Precio Histórico Inmutable
-- **Acción**: Mediante una petición `PATCH /api/libros/{id}` o modificación en catálogo, actualizar el precio de uno de los libros vendidos en el caso G-04 (por ejemplo, de $2500 a $4999). Luego ingresar a Historial y abrir el comprobante de la venta anterior con "Ver Detalle Histórico" (`GET /ventas/{id}`).
-- **Resultado Observado**: La venta registrada con anterioridad conserva intactos sus precios unitarios históricos originales ($2500) y subtotales, demostrando inmutabilidad del registro contable.
-- **Evidencia**: `evidencia/g05_precio_historico.png`.
+- **Acción**: Desde `#libros`, abrir el modal Editar sobre Libro `#29` (`Antología del Río`) y actualizar el precio de `1500.00` a `2990.00` (`PATCH /api/libros/29` → `200 OK`, observándose además el stock descontado tras la venta: `13 u.`). Luego ir a `#historial` y abrir nuevamente el comprobante `#26` (`GET /api/ventas/26`).
+- **Resultado Observado**: En el listado actual figura `$2990.00`, mientras que el comprobante histórico `#26` mantiene inalterados `precio_unitario: "1500.00"`, `subtotal: "3000.00"` y `total: "3045.00"`.
+- **Evidencia**: `evidencia/g05_precio_modificado_patch.png`, `evidencia/g05_precio_historico.png`.
 
 ### G-06 · Rechazo de Venta y Conservación del Borrador
-- **Acción**: Armar un pedido en borrador con 2 renglones válidos. Forzar un ID de cliente inexistente (o cuerpo inválido) y enviar. Luego probar agregar un libro repetido.
-- **Resultado Observado**: El backend rechaza la operación devolviendo **409 Conflict** (cliente inexistente) o **422 Unprocessable Entity**. El historial permanece inalterado y **el borrador con los renglones se conserva intacto en pantalla** para permitir al usuario corregir el error.
-- **Evidencia**: `evidencia/g06_rechazo.png`.
+- **Acción**: Armar un borrador válido en `#ventas` con 2 renglones (`$3080.00`: Libro `#29` cant. `1` + Libro `#1` cant. `2`), enviar con `cliente_id: 999999` (`POST /api/ventas/`) y verificar el historial. Además, probar vía API el envío de un `libro_id` repetido en los renglones (`[{"libro_id":29,"cantidad":1},{"libro_id":29,"cantidad":2}]`).
+- **Resultado Observado**: El cliente inexistente responde `409 Conflict` (`{"detail":"Cliente no encontrado"}`); el libro duplicado responde `422 Unprocessable Entity` (`"Value error, No se permiten libros duplicados en los renglones"`). El historial permanece intacto (`#26` sigue siendo el último comprobante) y el borrador en pantalla conserva ambos renglones para corregir.
+- **Evidencia**: `evidencia/g06_rechazo_409_borrador.png`, `evidencia/g06_rechazo_historial_intacto.png`.
 
-### G-07 · Despliegue y Persistencia tras Redespliegue
-- **Acción**: Verificar acceso público mediante HTTPS con candado SSL válido. Consultar `/api/health/ready` (devuelve 200). En Easypanel, realizar un reinicio o redespliegue de los contenedores y recargar la página.
-- **Resultado Observado**: La aplicación continúa funcionando sin interrupciones, la API responde 200 en salud y todos los libros, clientes y ventas previamente registrados continúan disponibles en PostgreSQL.
-- **Evidencia**: `evidencia/g07_despliegue_salud.png`.
+### G-07 · Despliegue y Persistencia en Producción
+- **Acción**: Verificar acceso público HTTPS en `https://libreria.maximofranco.me`, consultar `/api/health/ready`, comprobar la permanencia de datos históricos de sesiones anteriores (`2026-11-10`, comprobantes `#1`–`#24`, libros `#1`–`#28`) tras el despliegue del `2026-11-11` (`c5e3190`) y verificar que los registros nuevos (`Libro #29`, `Cliente #12`, `Venta #26`) persisten tras recargas en PostgreSQL.
+- **Resultado Observado**: La SPA carga sobre HTTPS vía `nginx/1.30.6`, `/api/health/ready` devuelve `200 OK` (`{"estado":"listo"}`) y tanto los datos previos como los generados durante las pruebas permanecen almacenados de forma persistente.
+- **Evidencia**: `evidencia/g07_health_ready_https.png`, `evidencia/g07_despliegue_catalogo_https.png`.

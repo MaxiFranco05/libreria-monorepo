@@ -35,8 +35,9 @@ libreria-monorepo/
 ├── DEPLOY.md                      # Bitácora oficial de despliegue en VPS / Easypanel y casos G-01 a G-07
 ├── compose.yaml                   # Orquestación Docker Compose (Postgres 16 + Backend + Frontend)
 ├── Consignas Global.pdf           # Enunciado oficial de la cátedra
-├── evidencia/                     # Evidencia fotográfica y bitácoras de los casos de prueba G-01 a G-07
-│   └── .gitkeep
+├── evidencia/                     # Capturas reales (g01..g07) y bitácora HTTP en evidencia/README.md
+│   ├── README.md
+│   └── g01..g07_*.png
 │
 ├── frontend/
 │   ├── Dockerfile                 # Imagen Nginx 1.30-alpine con envsubst
@@ -98,7 +99,7 @@ Requiere tener instalado **Docker Desktop** (o Docker Engine con plugin Compose)
 
 4. Abrir la aplicación en el navegador:
    - **Frontend (SPA)**: `http://localhost:8080`
-   - **Salud de la API vía Nginx**: `http://localhost:8080/api/health/ready` (debe responder `{"status":"ok", ...}`)
+   - **Salud de la API vía Nginx**: `http://localhost:8080/api/health/ready` (debe responder `{"estado":"listo"}`)
    - **Documentación Swagger de la API**: `http://localhost:8000/docs`
 
 5. Para detener los contenedores:
@@ -170,4 +171,14 @@ Los 7 casos de verificación funcional exigidos por la cátedra son:
 | **G-06** | **Rechazo** | Intentar venta con ID inexistente (409) o renglones con libros duplicados (422). | El servidor rechaza la operación, el historial no se altera y la UI **conserva el borrador** para corregir. |
 | **G-07** | **Despliegue** | Inspeccionar el despliegue en Easypanel bajo dominio HTTPS público. | La SPA abre por HTTPS, `/api/health/ready` devuelve 200, y los datos persisten tras redespliegue de los contenedores. |
 
-Para el detalle paso a paso de la configuración en Easypanel, variables de entorno y evidencias, consultar **[DEPLOY.md](DEPLOY.md)**.
+Para el detalle paso a paso de la configuración en Easypanel, variables de entorno y salidas verificadas, consultar **[DEPLOY.md](DEPLOY.md)** y **[evidencia/README.md](evidencia/README.md)**.
+
+---
+
+## 5. Decisiones de Integración (Consultas por ID)
+
+La API REST implementada en el backend expone endpoints de listado paginado para recursos principales (como `GET /api/libros/`, `GET /api/clientes/`, `GET /api/ventas/`, además de `/api/editoriales/` y `/api/generos/`), mientras que las vistas individuales se apoyan en **consultas puntuales por ID**:
+
+- **Autores (`GET /api/autores/{id}`)**: al registrar un libro en `#libros`, el usuario verifica el `autor_id` antes de incorporarlo a la lista de autorías (`rol` y `orden`).
+- **Clientes (`GET /api/clientes/{id}`)**: además del selector en `#ventas` alimentado por `GET /api/clientes/`, el módulo `#clientes` permite recuperar individualmente un cliente por su identificador numérico.
+- **Libros y Ventas (`GET /api/libros/{id}`, `GET /api/ventas/{id}`)**: se consumen bajo demanda al abrir los modales de detalle con autorías en Catálogo/Libros y los comprobantes inmutables en Historial.
