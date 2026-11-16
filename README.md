@@ -43,6 +43,7 @@ libreria-monorepo/
 │   ├── Dockerfile                 # Imagen Nginx 1.30-alpine con envsubst
 │   ├── .dockerignore
 │   ├── default.conf.template      # Configuración del servidor web y proxy inverso (/api/ -> upstream)
+│   ├── env.example                # Plantilla de variable API_UPSTREAM para el proxy Nginx
 │   └── public/                    # Archivos estáticos servidos en producción
 │       ├── index.html             # Shell SPA accesible con las 5 secciones
 │       ├── css/                   # Hojas de estilo modulares (base, layout, components, views)
@@ -66,7 +67,7 @@ libreria-monorepo/
     ├── alembic.ini                # Configuración del gestor de migraciones
     ├── requirements.txt           # Dependencias de producción
     ├── env.example                # Plantilla de variables de entorno (DATABASE_URL, SQL_ECHO)
-    ├── seed_db.py                 # Script de carga inicial de datos ficticios reproducibles
+    ├── seed_db.py                 # Script de carga inicial reproducible (ejecuta TRUNCATE ... CASCADE previo)
     ├── app/                       # Código fuente de la API FastAPI
     │   ├── main.py                # Fábrica create_app y ciclo de vida lifespan
     │   ├── core/                  # Base de datos asyncpg, excepciones y paginación
@@ -92,10 +93,11 @@ Requiere tener instalado **Docker Desktop** (o Docker Engine con plugin Compose)
    docker compose up --build -d
    ```
 
-3. Cargar los datos ficticios iniciales en la base de datos (idempotente):
+3. Cargar los datos ficticios iniciales en la base de datos:
    ```bash
    docker exec -it libreria-backend python seed_db.py
    ```
+   > **Advertencia**: `seed_db.py` ejecuta `TRUNCATE TABLE ... RESTART IDENTITY CASCADE` sobre todas las tablas del dominio (`renglon_venta`, `venta`, `perfil_cliente`, `cliente`, `libro_autor`, `libro`, `genero`, `autor`, `editorial`), por lo que **borra todos los registros existentes** antes de recargar el banco inicial. No ejecutarlo si deseás conservar ventas o altas previas.
 
 4. Abrir la aplicación en el navegador:
    - **Frontend (SPA)**: `http://localhost:8080`
@@ -137,7 +139,7 @@ Requiere tener instalado **Docker Desktop** (o Docker Engine con plugin Compose)
    DATABASE_URL=postgresql+asyncpg://usuario:contraseña@localhost:5432/libreria_db
    SQL_ECHO=false
    ```
-5. Aplicar migraciones e inicializar datos de prueba:
+5. Aplicar migraciones e inicializar datos de prueba (advertencia: `seed_db.py` hace `TRUNCATE ... CASCADE` y borra datos previos de esas tablas):
    ```bash
    alembic upgrade head
    python seed_db.py
@@ -148,7 +150,7 @@ Requiere tener instalado **Docker Desktop** (o Docker Engine con plugin Compose)
    ```
 
 #### B. Frontend con Contenedor Docker (según consigna pág. 5)
-Desde el directorio `frontend/`:
+La plantilla de variable de entorno está en `frontend/env.example` (`API_UPSTREAM`). Desde el directorio `frontend/`:
 ```bash
 docker build -t libreria-frontend .
 # En Windows PowerShell (Docker Desktop):

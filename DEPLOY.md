@@ -14,7 +14,7 @@
 - **IP Pública del Servidor VPS (DNS A)**: `179.199.130.181`
 - **Swagger / OpenAPI Docs**: `https://libreria.maximofranco.me/api/docs` (spec OpenAPI JSON en `/api/openapi.json`)
 - **Endpoints de Verificación de Salud**: `https://libreria.maximofranco.me/api/health/ready` (`{"estado":"listo"}`) y `https://libreria.maximofranco.me/api/health/live` (`{"estado":"vivo"}`)
-- **Revisión del Repositorio**: Rama `main`, commit desplegado en producción `c5e3190` (`Last-Modified: Wed, 11 Nov 2026 18:11:08 GMT`)
+- **Revisión del Repositorio**: Rama `main` (evidencia funcional ejecutada sobre el despliegue en `c5e3190`, `Last-Modified: Wed, 11 Nov 2026 18:11:08 GMT`; entrega actualizada en la punta de `main`)
 - **Plataforma de Despliegue**: Servidor VPS administrado mediante **Easypanel** (red interna Docker entre PostgreSQL 16, `backend` interno y `frontend` público)
 - **Base de Datos**: PostgreSQL 16 (Servicio interno gestionado en Easypanel)
 
@@ -68,9 +68,11 @@ Las variables sensibles se definen exclusivamente en el panel privado de Easypan
 | `SQL_ECHO` | `false` | Deshabilita el logging exhaustivo de queries SQL en consola para producción. |
 
 ### B. Servicio `frontend`
+Ver plantilla versionada en `frontend/env.example`.
+
 | Variable | Valor de Ejemplo / Producción | Descripción |
 |---|---|---|
-| `API_UPSTREAM` | `proyecto_backend:8000` | Host interno y puerto asignado al servicio backend en la red privada de Easypanel (sin prefijo `http://` ni barra final). |
+| `API_UPSTREAM` | `localhost_libreria-backend:8000` (genérico: `<proyecto>_backend:8000`) | Host interno y puerto asignado al servicio backend en la red privada de Easypanel (sin prefijo `http://` ni barra final). |
 
 ---
 
@@ -101,7 +103,7 @@ Las variables sensibles se definen exclusivamente en el panel privado de Easypan
    - Cargar `DATABASE_URL=postgresql+asyncpg://<usuario>:<password>@<nombreproyecto_postgres>:5432/<nombre_db>`.
    - Cargar `SQL_ECHO=false`.
 5. En la pestaña **Domains**:
-   - Si Easypanel generó un dominio automático para este servicio, **eliminarlo** para mantener la API completamente privada en la red interna.
+   - Si Easypanel generó algún dominio automático o dominio de API para este servicio (por ejemplo `*.easypanel.host` o `api.*`), **eliminarlo** desde el ícono de tacho en **Dominios** para mantener la API completamente privada en la red interna (consigna pág. 7).
 6. En la pestaña **Deploy**:
    - Pulsar **Deploy**.
    - Revisar en la consola de **Build Logs** que se instalen las dependencias (`requirements.txt`) y que el contenedor inicie exitosamente.
@@ -114,11 +116,12 @@ Las variables sensibles se definen exclusivamente en el panel privado de Easypan
    python -c "from urllib.request import urlopen; print(urlopen('http://127.0.0.1:8000/health/ready').status)"
    ```
    *Debe imprimir `200`.*
-3. Ejecutar el script de carga inicial documentado:
+3. Ejecutar el script de carga inicial documentado únicamente en la carga inicial o si se desea reiniciar el entorno de pruebas:
    ```bash
    python seed_db.py
    ```
-   *Este comando poblará editoriales (Planeta, Sudamericana, etc.), géneros, autores, libros de catálogo y clientes.*
+   *Este comando poblará editoriales, géneros, autores, libros de catálogo y clientes.*
+   > **Advertencia sobre datos existentes**: `seed_db.py` ejecuta `TRUNCATE TABLE renglon_venta, venta, perfil_cliente, cliente, libro_autor, libro, genero, autor, editorial RESTART IDENTITY CASCADE`, por lo que **elimina todos los registros existentes** antes de reinsertar el seed. No debe ejecutarse sobre una base con ventas o altas que deban preservarse.
 
 ### Paso 5: Crear y Publicar el Servicio `frontend`
 1. En el mismo proyecto, pulsar **New Service** → **App** y asignarle el nombre `frontend`.
@@ -130,7 +133,7 @@ Las variables sensibles se definen exclusivamente en el panel privado de Easypan
    - **Build Method**: `Dockerfile`.
    - **Dockerfile Path**: `Dockerfile`.
 4. En la pestaña **Environment**:
-   - Configurar `API_UPSTREAM=<nombreproyecto_backend>:8000` (ejemplo: `libreria-global_backend:8000`).
+   - Configurar `API_UPSTREAM=<nombreproyecto_backend>:8000` tomando como guía `frontend/env.example` (por ejemplo, para proyecto `localhost` y servicio `libreria-backend`: `localhost_libreria-backend:8000`).
 5. En la pestaña **Domains**:
    - Agregar el dominio público del frontend (`libreria.maximofranco.me`) y mantener el servicio `backend` **solo interno** (sin dominio público automático).
    - Puerto de destino: `80`.
@@ -173,7 +176,7 @@ Dado que la base de datos PostgreSQL corre en un servicio independiente con vol�
 
 ## 7. Registro de Casos de Prueba (G-01 a G-07)
 
-Se documenta la ejecución real de las 7 pruebas funcionales exigidas sobre el despliegue público `https://libreria.maximofranco.me` (IP `179.199.130.181`, servidor `nginx/1.30.6`, commit `c5e3190`). Las salidas HTTP completas constan en [`evidencia/README.md`](evidencia/README.md).
+Se documenta la ejecución real de las 7 pruebas funcionales exigidas sobre el despliegue público `https://libreria.maximofranco.me` (IP `179.199.130.181`, servidor `nginx/1.30.6`, frontend servido desde commit `c5e3190`). Las salidas HTTP completas constan en [`evidencia/README.md`](evidencia/README.md).
 
 ### G-01 · Catálogo
 - **Acción**: Ingresar a la sección Catálogo (`#catalogo`), navegar paginación (`GET /api/libros/?limit=12&offset=0` → `offset=12`), buscar por título en minúsculas `"ficciones"` (`offset` reiniciado a `0`), abrir "Ver Autores" en el libro ID `7` (`GET /api/libros/7`) y buscar un término inexistente (`"LibroInexistenteXYZ"`).

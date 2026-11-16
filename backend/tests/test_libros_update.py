@@ -2,6 +2,8 @@ import pytest
 from decimal import Decimal
 from unittest.mock import AsyncMock, MagicMock
 from fastapi import HTTPException
+from fastapi.testclient import TestClient
+from app.core.database import get_session
 from app.core.exceptions import DomainError
 from pydantic import ValidationError
 from sqlalchemy.exc import IntegrityError
@@ -10,7 +12,7 @@ import app.main
 from app.modules.editoriales.models import Editorial
 from app.modules.generos.models import Genero
 from app.modules.libros.models import Libro
-from app.modules.libros.schemas import LibroCreate, LibroUpdate
+from app.modules.libros.schemas import AutorCreateNested, LibroCreate, LibroUpdate
 from app.modules.libros.service import update_libro
 
 
@@ -83,9 +85,90 @@ def test_libro_create_isbn_vacio_lanza_error_validacion():
             precio=Decimal("50.00"),
             stock=5,
             editorial_id=1,
+            autores=[AutorCreateNested(autor_id=1, rol="autor", orden=1)],
         )
 
     assert "El ISBN no puede estar vacío" in str(exc_info.value)
+
+
+def test_libro_create_sin_autores_lanza_error_validacion():
+    with pytest.raises(ValidationError):
+        LibroCreate(
+            isbn="978-950-12-3456-7",
+            titulo="El Aleph",
+            precio=Decimal("50.00"),
+            stock=5,
+            editorial_id=1,
+            autores=[],
+        )
+
+    with pytest.raises(ValidationError):
+        LibroCreate(
+            isbn="978-950-12-3456-7",
+            titulo="El Aleph",
+            precio=Decimal("50.00"),
+            stock=5,
+            editorial_id=1,
+        )
+
+
+def test_libro_create_con_autores_validos_acepta_uno_o_mas():
+    un_autor = LibroCreate(
+        isbn="978-950-12-3456-7",
+        titulo="El Aleph",
+        precio=Decimal("50.00"),
+        stock=5,
+        editorial_id=1,
+        autores=[AutorCreateNested(autor_id=1, rol="autor", orden=1)],
+    )
+    dos_autores = LibroCreate(
+        isbn="978-950-12-3456-8",
+        titulo="Rayuela",
+        precio=Decimal("55.00"),
+        stock=10,
+        editorial_id=1,
+        autores=[
+            AutorCreateNested(autor_id=2, rol="autor", orden=1),
+            AutorCreateNested(autor_id=1, rol="coautor", orden=2),
+        ],
+    )
+
+    assert len(un_autor.autores) == 1
+    assert len(dos_autores.autores) == 2
+
+
+def test_post_libro_sin_autores_responde_422():
+    test_app = app.main.create_app()
+
+    async def _dummy_session():
+        yield AsyncMock()
+
+    test_app.dependency_overrides[get_session] = _dummy_session
+    with TestClient(test_app) as client:
+        resp_vacio = client.post(
+            "/libros/",
+            json={
+                "isbn": "978-950-12-3456-7",
+                "titulo": "El Aleph",
+                "precio": "50.00",
+                "stock": 5,
+                "editorial_id": 1,
+                "autores": [],
+            },
+        )
+        resp_omitido = client.post(
+            "/libros/",
+            json={
+                "isbn": "978-950-12-3456-7",
+                "titulo": "El Aleph",
+                "precio": "50.00",
+                "stock": 5,
+                "editorial_id": 1,
+            },
+        )
+
+    assert resp_vacio.status_code == 422
+    assert resp_omitido.status_code == 422
 
 
 @pytest.mark.asyncio

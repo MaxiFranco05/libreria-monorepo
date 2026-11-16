@@ -39,7 +39,10 @@ class LibroCreate(SQLModel):
     stock: int = Field(ge=0, description="Stock no puede ser negativo")
     editorial_id: int = Field(ge=1)
     genero_id: int | None = None
-    autores: List[AutorCreateNested] = Field(default_factory=list)
+    autores: Annotated[
+        List[AutorCreateNested],
+        Field(min_length=1, description="Debe incluir al menos un autor"),
+    ]
 
     @field_validator("isbn")
     @classmethod
