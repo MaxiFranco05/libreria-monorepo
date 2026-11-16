@@ -12,7 +12,7 @@
 
 - **URL Pública del Servicio (Principal)**: `https://libreria.maximofranco.me` (Nginx `1.30.6` sirve la SPA en `/` y hace proxy de `/api/` hacia el backend interno)
 - **IP Pública del Servidor VPS (DNS A)**: `179.199.130.181`
-- **Swagger / OpenAPI Docs**: `https://libreria.maximofranco.me/api/docs` (spec OpenAPI JSON en `/api/openapi.json`)
+- **Spec OpenAPI JSON en Producción**: `https://libreria.maximofranco.me/api/openapi.json` *(nota: `/api/docs` carga el HTML de Swagger UI, pero al buscar `/openapi.json` en `/` recibe `404` porque la plantilla de Nginx `proxy_pass http://${API_UPSTREAM}/;` remueve el prefijo `/api/` según la consigna pág. 5; localmente Swagger abre completo en `http://localhost:8000/docs`)*
 - **Endpoints de Verificación de Salud**: `https://libreria.maximofranco.me/api/health/ready` (`{"estado":"listo"}`) y `https://libreria.maximofranco.me/api/health/live` (`{"estado":"vivo"}`)
 - **Revisión del Repositorio**: Rama `main` (evidencia funcional ejecutada sobre el despliegue en `c5e3190`, `Last-Modified: Wed, 11 Nov 2026 18:11:08 GMT`; entrega actualizada en la punta de `main`)
 - **Plataforma de Despliegue**: Servidor VPS administrado mediante **Easypanel** (red interna Docker entre PostgreSQL 16, `backend` interno y `frontend` público)
